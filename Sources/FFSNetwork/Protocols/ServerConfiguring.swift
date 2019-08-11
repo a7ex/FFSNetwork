@@ -22,6 +22,10 @@ public extension ServerConfiguring {
         // if request.baseUrl?.host is missing we use the host from the ServerConfiguration:
         urlComps.host = request.baseUrl?.host ?? urlComponents.host
         
+        if let port = urlComponents.port {
+            urlComps.port = port
+        }
+        
         urlComps.path = request.path
         urlComps.queryItems = request.queryItems
         if let url = urlComps.url {
