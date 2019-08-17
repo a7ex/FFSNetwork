@@ -7,7 +7,7 @@
  If used with requests, which conform to TypedNetworkRequest, then the result success value
  will match the type defined in the requests mapResponse() function value return type.
 
- ```
+ ```swift
 struct Backend {
     private let serverConnection: ServerConnection!
 
@@ -31,7 +31,7 @@ struct Backend {
  Note that for typed results you can use the built-in 'BackendRequest' struct with just a custom "TypedNetworkResponse" type.
 
  If you add the example files to your project you then can add the following method to your Backend struct:
- ```
+ ```swift
      func loadTodos(_ completion: @escaping (Result<FetchTodosResponse, Error>) -> Void) {
          let request = FetchTodosRequest()
          serverConnection.runTaskWith(request, completion: completion)
@@ -39,7 +39,7 @@ struct Backend {
  ```
 Now when using the 'Backend' in the UI Layer (UIViewController subclass) you get back an array of 'Todo' objects.
  
-```
+```swift
     import UIKit
     
     class TodosViewController: UIViewController {
