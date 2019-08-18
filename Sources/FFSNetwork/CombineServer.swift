@@ -35,7 +35,7 @@ extension CombineServer {
         }
         return urlSession.dataTaskPublisher(for: urlRequest)
             .map { $0.data }
-            .decode(type: T.ReturnType.ResponseType, decoder: decoder)
+            .decode(type: T.ReturnType.ResponseType.self, decoder: decoder)
             .eraseToAnyPublisher()
     }
 }
