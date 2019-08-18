@@ -29,13 +29,13 @@ public struct CombineServer {
 @available(OSX 10.15, iOS 13.0, *)
 extension CombineServer {
     public func runTaskWith<T: TypedNetworkRequest>(
-        _ request: T) -> AnyPublisher<T.ReturnType, Error> where T.ReturnType: Decodable {
+        _ request: T) -> AnyPublisher<T.ReturnType.ResponseType, Error> where T.ReturnType.ResponseType: Decodable {
         guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
             preconditionFailure("Unable to create URLRequest from request: \(request)")
         }
         return urlSession.dataTaskPublisher(for: urlRequest)
             .map { $0.data }
-            .decode(type: T.ReturnType.self, decoder: decoder)
+            .decode(type: T.ReturnType.ResponseType, decoder: decoder)
             .eraseToAnyPublisher()
     }
 }
