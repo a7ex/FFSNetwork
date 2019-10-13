@@ -16,6 +16,7 @@ public protocol NetworkRequest {
     var allHTTPHeaderFields: [String: String]? { get }
     var httpBody: Data? { get }
     var cachePolicy: URLRequest.CachePolicy { get }
+    var timeoutInterval: TimeInterval { get }
 }
 
 /// Allow URLRequest to be used as NetworkRequest by conforming to protocol

@@ -9,7 +9,19 @@ import Foundation
 @testable import FFSNetwork
 
 struct MockData {
-    struct URLSessionMock: DataTaskCreator {
+    static func serverConnectionWhichReturns(data: Data?, response: URLResponse?, error: Error?) -> ServerConnection {
+        let serverConfiguration = MockData.ServerConfigurationMock()
+        let sessionMock = MockData.URLSessionMock(
+            mockURLSessionDataTask: MockData.MockURLSessionDataTask(
+                expectedData: data,
+                expectedResponse: response,
+                expectedError: error
+            )
+        )
+        return ServerConnection(configuration: serverConfiguration, urlSession: sessionMock)
+    }
+    
+    private struct URLSessionMock: DataTaskCreator {
         let mockURLSessionDataTask: MockURLSessionDataTask
         
         func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
@@ -18,7 +30,7 @@ struct MockData {
         }
     }
     
-    class MockURLSessionDataTask: URLSessionDataTask {
+    private class MockURLSessionDataTask: URLSessionDataTask {
         let expectedData: Data?
         let expectedResponse: URLResponse?
         let expectedError: Error?
@@ -26,12 +38,10 @@ struct MockData {
         
         init(expectedData: Data?,
             expectedResponse: URLResponse?,
-            expectedError: Error?,
-            completionHandler: ((Data?, URLResponse?, Error?) -> Void)?) {
+            expectedError: Error?) {
             self.expectedData = expectedData
             self.expectedResponse = expectedResponse
             self.expectedError = expectedError
-            self.completionHandler = completionHandler
         }
         
         override func resume() {
@@ -39,7 +49,7 @@ struct MockData {
         }
     }
     
-    struct ServerConfigurationMock: ServerConfiguring {
+    private struct ServerConfigurationMock: ServerConfiguring {
         var urlComponents: URLComponents {
             var urlComponents = URLComponents()
             urlComponents.scheme = "https"

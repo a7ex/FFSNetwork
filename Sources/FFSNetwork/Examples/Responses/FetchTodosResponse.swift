@@ -44,9 +44,9 @@ struct FetchTodosResponse: TypedNetworkResponse {
     
     func jobDetailsAfter(_ elapsedSeconds: Double) -> String {
         let elapsed = formatter.string(from: NSNumber(value: elapsedSeconds)) ?? ""
-        return sentRequest.formattedString + "\n" +
+        return sentRequest.formattedURLRequest + "\n" +
             "\nELAPSED TIME: \(elapsed) seconds...\n" +
-            (httpURLResponse?.formattedString ?? "No response!")
+            (httpURLResponse?.formattedURLResponse ?? "No response!")
     }
     
     private let formatter: NumberFormatter = {

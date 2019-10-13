@@ -21,6 +21,7 @@ struct FetchTodosRequest: TypedNetworkRequest {
         return mutableHeaders
     }
     let cachePolicy: URLRequest.CachePolicy
+    let timeoutInterval: TimeInterval
     
     let path = "/todos"
     let method: HTTPMethod = .get
@@ -36,6 +37,7 @@ struct FetchTodosRequest: TypedNetworkRequest {
          cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy) {
         self.mutableHeaders = headers ?? [String: String]()
         self.cachePolicy = cachePolicy
+        self.timeoutInterval = TimeInterval(60)
     }
     
     public mutating func setValue(_ value: String?, forHTTPHeaderField field: String) {

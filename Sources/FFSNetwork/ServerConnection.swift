@@ -25,7 +25,7 @@ import Foundation
 ///
 ///        func loadSomeText(_ completion: @escaping (Result<StringResponse, Error>) -> Void) {
 ///            let request = BackendRequest<StringResponse>(path: "/someText")
-///            runTaskWith(request, completion: completion)
+///            serverConnection.runTaskWith(request, completion: completion)
 ///        }
 ///    }
 ///```
@@ -79,6 +79,7 @@ import Foundation
 public final class ServerConnection {
     private let urlSession: DataTaskCreator
     private let serverConfiguration: ServerConfiguring
+    private let messageHandler: ((String) -> Void)
     
     /// Create an instance of a server connection using a configuration of type ServerConfiguring
     /// optionally takes a sessionConfiguration of type URLSessionConfiguration. Defaults to the default configuration
@@ -88,10 +89,13 @@ public final class ServerConnection {
     ///   - urlSessionConfiguration: pass in your own URLSession, if you have special requirements
     ///                                              e.g custom URLSessionConfiguration, URLSessionDelegate
     ///                                              if nil, defaults to URLSession with default URLSessionConfiguration
+    ///   - messageHandler:  an opptional closure to receive status messages as loggable strings (useful for debugging)
     public init(configuration: ServerConfiguring,
-                urlSession: DataTaskCreator? = nil) {
+                urlSession: DataTaskCreator? = nil,
+                messageHandler: (@escaping (String) -> Void) = { _ in}) {
         self.serverConfiguration = configuration
         self.urlSession = urlSession ?? URLSession(configuration: URLSessionConfiguration.default)
+        self.messageHandler = messageHandler
     }
     
     //MARK: - Regular return values: Data?, URLResponse? and Error?
@@ -169,11 +173,14 @@ public final class ServerConnection {
         ) throws -> URLSessionTask {
         do {
             let urlRequest = try serverConfiguration.createURLRequest(with: request)
-            return urlSession.dataTask(with: urlRequest) { (data, response, error) in
+            messageHandler(urlRequest.formattedURLRequest)
+            return urlSession.dataTask(with: urlRequest) { [weak self] (data, response, error) in
                 if let error = error {
+                    self?.messageHandler(error.localizedDescription)
                     completion(Result.failure(ServerConnectionError.httpErrorNotNil(error, urlRequest, response, data)))
                 }
                 else {
+                    self?.messageHandler(response?.formattedURLResponse ?? "- No response data! -")
                     completion(Result.success(NetworkResultData(data: data, response: response, error: error)))
                 }
             }
@@ -216,12 +223,15 @@ public final class ServerConnection {
         ) throws -> URLSessionTask {
         do {
             let urlRequest = try serverConfiguration.createURLRequest(with: request)
-            return urlSession.dataTask(with: urlRequest) { (data, response, error) in
+            messageHandler(urlRequest.formattedURLRequest)
+            return urlSession.dataTask(with: urlRequest) { [weak self] (data, response, error) in
                 if let error = error {
+                    self?.messageHandler(error.localizedDescription)
                     completion(Result.failure(ServerConnectionError.httpErrorNotNil(error, urlRequest, response, data)))
                     return
                 }
                 do {
+                    self?.messageHandler(response?.formattedURLResponse ?? "- No response data! -")
                     let resp = try request.mapResponse(data, response, urlRequest)
                     completion(Result.success(resp))
                 } catch {

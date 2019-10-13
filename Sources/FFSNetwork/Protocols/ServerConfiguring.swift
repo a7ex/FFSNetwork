@@ -29,7 +29,10 @@ public extension ServerConfiguring {
         urlComps.path = request.path
         urlComps.queryItems = request.queryItems
         if let url = urlComps.url {
-            return URLRequest(url: url, requestLike: request)
+            return URLRequest(url: url,
+                              requestLike: request,
+                              cachePolicy: request.cachePolicy,
+                              timeoutInterval: request.timeoutInterval)
         } else {
             throw ServerConnectionError.unableToCreateURLFromComponents(urlComps)
         }
@@ -37,11 +40,13 @@ public extension ServerConfiguring {
 }
 
 private extension URLRequest {
-    init<T: NetworkRequest>(url requestUrl: URL, requestLike: T) {
-        self.init(url: requestUrl)
+    init<T: NetworkRequest>(url requestUrl: URL,
+                            requestLike: T,
+                            cachePolicy: URLRequest.CachePolicy,
+                            timeoutInterval: TimeInterval) {
+        self.init(url: requestUrl, cachePolicy: cachePolicy, timeoutInterval: timeoutInterval)
         allHTTPHeaderFields = requestLike.allHTTPHeaderFields
         httpBody = requestLike.httpBody
         httpMethod = requestLike.method.rawValue
-        cachePolicy = requestLike.cachePolicy
     }
 }

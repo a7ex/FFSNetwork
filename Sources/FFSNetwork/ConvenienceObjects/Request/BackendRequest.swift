@@ -22,10 +22,12 @@ public struct BackendRequest<T: TypedNetworkResponse>: TypedNetworkRequest {
         return mutableHeaders
     }
     public let cachePolicy: URLRequest.CachePolicy
+    public let timeoutInterval: TimeInterval
     public let httpBody: Data?
     public var mapResponse: (Data?, URLResponse?, URLRequest) throws -> ReturnType = ReturnType.init
     
-    // we let ServerConnection construct the url to the backend
+    // We let ServerConnection construct the url to the backend
+    // if baseUrl is nil, ServerConnection will use its own baseUrl
     public let baseUrl: URL?
     
     private var mutableHeaders: [String: String]
@@ -36,6 +38,7 @@ public struct BackendRequest<T: TypedNetworkResponse>: TypedNetworkRequest {
          queryItems: [URLQueryItem]? = nil,
          httpBody: Data? = nil,
          cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy,
+          timeoutInterval: TimeInterval = TimeInterval(60),
          baseUrl: URL? = nil) {
         self.path = path
         self.method = method
@@ -43,6 +46,7 @@ public struct BackendRequest<T: TypedNetworkResponse>: TypedNetworkRequest {
         self.queryItems = queryItems
         self.httpBody = httpBody
         self.cachePolicy = cachePolicy
+        self.timeoutInterval = timeoutInterval
         self.baseUrl = baseUrl
     }
     

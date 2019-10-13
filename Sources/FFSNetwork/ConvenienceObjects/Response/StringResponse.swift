@@ -39,9 +39,9 @@ public struct StringResponse: TypedNetworkResponse {
     
     public func jobDetailsAfter(_ elapsedSeconds: Double) -> String {
         let elapsed = formatter.string(from: NSNumber(value: elapsedSeconds)) ?? ""
-        return sentRequest.formattedString + "\n" +
+        return sentRequest.formattedURLRequest + "\n" +
             "\nELAPSED TIME: \(elapsed) seconds...\n" +
-            (httpURLResponse?.formattedString ?? "No response!")
+            (httpURLResponse?.formattedURLResponse ?? "No response!")
     }
     
     private let formatter: NumberFormatter = {
@@ -51,6 +51,7 @@ public struct StringResponse: TypedNetworkResponse {
         return fmt
     }()
 }
+
 public enum StringResponseError: Error {
     case unexpectedResponse(Data, URLResponse?)
 }
