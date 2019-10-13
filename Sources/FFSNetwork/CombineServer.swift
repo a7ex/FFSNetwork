@@ -58,11 +58,11 @@ extension CombineServer {
     /// - Parameter request: a request which conforms to TypedNetworkRequest
     public func runTaskWith<T: TypedNetworkRequest>(_ request: T) ->
         AnyPublisher<T.ReturnType, Error> where T.ReturnType.ResponseType: Decodable {
-        guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
-            preconditionFailure("Unable to create URLRequest from request: \(request)")
-        }
-        return urlSession.dataTaskPublisher(for: urlRequest)
-            .tryMap { try request.mapResponse($0.data, $0.response, urlRequest) }
-            .eraseToAnyPublisher()
+            guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
+                preconditionFailure("Unable to create URLRequest from request: \(request)")
+            }
+            return urlSession.dataTaskPublisher(for: urlRequest)
+                .tryMap { try request.mapResponse($0.data, $0.response, urlRequest) }
+                .eraseToAnyPublisher()
     }
 }

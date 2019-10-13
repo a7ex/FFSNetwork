@@ -21,8 +21,12 @@ struct BackendRx {
     }
 }
 
+@available(OSX 10.15, iOS 13, *)
 extension BackendRx {
-    func loadDefectsRx() -> AnyPublisher<[Defect], Error> {
-        return serverConnection.runTaskWith(AllDefectsRequest())
+    func loadTodosRx() -> AnyPublisher<FetchTodosResponse, Error> {
+        return serverConnection.runTaskWith(FetchTodosRequest())
+    }
+    func loadTodosRx2() -> AnyPublisher<[Todo], Error> {
+        return serverConnection.runJSONTaskWith(FetchTodosRequest())
     }
 }
