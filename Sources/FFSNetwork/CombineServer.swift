@@ -1,8 +1,9 @@
 //
 //  CombineServer.swift
-//  
+//  FFSNetwork
 //
 //  Created by Alex da Franca on 17.08.19.
+//  Copyright © 2019 Farbflash. All rights reserved.
 //
 
 import Foundation

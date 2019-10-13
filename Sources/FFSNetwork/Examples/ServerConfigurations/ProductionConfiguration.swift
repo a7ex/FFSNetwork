@@ -1,9 +1,9 @@
 //
 //  ProductionConfiguration.swift
-//  NetworkModul
+//  FFSNetwork
 //
 //  Created by Alex da Franca on 19.01.19.
-//  Copyright © 2019 Deutsch Post E-Post GmbH. All rights reserved.
+//  Copyright © 2019 Farbflash. All rights reserved.
 //
 
 import Foundation

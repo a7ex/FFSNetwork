@@ -1,6 +1,6 @@
 //
 //  TypedNetworkRequest.swift
-//  NetworkStack
+//  FFSNetwork
 //
 //  Created by Alex da Franca on 28.07.19.
 //  Copyright © 2019 Farbflash. All rights reserved.

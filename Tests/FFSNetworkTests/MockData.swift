@@ -1,8 +1,9 @@
 //
-//  File.swift
+//  MockData.swift
 //  
 //
 //  Created by Alex da Franca on 11.08.19.
+//  Copyright © 2019 Farbflash. All rights reserved.
 //
 
 import Foundation
