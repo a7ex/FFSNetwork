@@ -9,17 +9,17 @@
 import Foundation
 
 /// A concrete implementation of a NetworkRequest for convenience
-struct Request: NetworkRequest {
-    let baseUrl: URL?
-    let method: HTTPMethod
-    let path: String
-    let queryItems: [URLQueryItem]?
-    let allHTTPHeaderFields: [String : String]?
-    let httpBody: Data?
-    let cachePolicy: URLRequest.CachePolicy
-    let timeoutInterval: TimeInterval
+public struct Request: NetworkRequest {
+    public let baseUrl: URL?
+    public let method: HTTPMethod
+    public let path: String
+    public let queryItems: [URLQueryItem]?
+    public let allHTTPHeaderFields: [String : String]?
+    public let httpBody: Data?
+    public let cachePolicy: URLRequest.CachePolicy
+    public let timeoutInterval: TimeInterval
     
-    init(path: String,
+    public init(path: String,
          method: HTTPMethod = .get,
          allHTTPHeaderFields: [String : String]? = nil,
          cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy,
