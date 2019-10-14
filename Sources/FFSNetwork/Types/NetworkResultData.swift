@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// A container for the values, which we get back from server requests
 public struct NetworkResultData {
     public let data: Data?
     public let response: URLResponse?

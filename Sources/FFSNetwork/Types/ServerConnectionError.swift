@@ -8,6 +8,8 @@
 
 import Foundation
 
+/// FFSNetwork own error type
+/// Use ErrorMessageprovider to get a short message string for each of these errors
 public enum ServerConnectionError: Error {
     /// Error is not nil
     case httpErrorNotNil(Error, URLRequest, URLResponse?, Data?)

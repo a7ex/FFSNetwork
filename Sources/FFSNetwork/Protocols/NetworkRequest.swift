@@ -7,7 +7,10 @@
 //
 
 import Foundation
-
+/// A simple request object
+/// An object conforming to *NetworkRequest* can be used for untyped response requests
+/// For a typed response use *TypedNetworkRequest*, which inherits from *NetworkRequest*
+/// The standard *URLRequest* conforms also to *NetworkRequest*, so it can be used whereever *NetworkRequest*
 public protocol NetworkRequest {
     var baseUrl: URL? { get }
     var method: HTTPMethod { get }

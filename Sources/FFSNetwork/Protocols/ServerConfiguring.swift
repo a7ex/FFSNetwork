@@ -8,6 +8,13 @@
 
 import Foundation
 
+/// Objects conforming to protocol *ServerConfiguring* can be used to configure a *ServerConnection*.
+/// All it provides is an URLComponents object.
+/// It provides a default implementation to create a regular *URLRequest" from any object, conforming to "NetworkRequest*
+/// *ServerConfiguring* basically only provides the scheme and host of the server. However, if the request contains
+/// a 'baseUrl' property, the scheme and host from that baseUrl are taken. In that case ServerConfiguring's urlComponents
+/// are not used at all. Rather everything to construct the URLRequest is read from the parameter 'request', which
+/// is an object conforming to *NetworkRequest*
 public protocol ServerConfiguring {
     var urlComponents: URLComponents { get }
 }

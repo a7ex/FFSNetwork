@@ -32,6 +32,9 @@ public struct StringResponse: TypedNetworkResponse {
         if let str = String(data: data, encoding: .utf8) {
             self.value = str
         }
+        else if let str = String(data: data, encoding: .isoLatin1) {
+            self.value = str
+        }
         else {
             throw StringResponseError.unexpectedResponse(data, urlResponse)
         }

@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// Use an enum rather than string for the HTTP method
 public enum HTTPMethod: String {
     case get, post, put, delete, patch
 }

@@ -1,3 +1,3 @@
 struct FFSNetwork {
-    var text = "Hello, World!"
+    var text = "FFSNetwork"
 }
