@@ -29,6 +29,9 @@ public extension ServerConfiguring {
         urlComps.path = request.path
         urlComps.queryItems = request.queryItems
         if let url = urlComps.url {
+            if url.absoluteString.isEmpty {
+                throw ServerConnectionError.unableToCreateURLFromComponents(urlComps)
+            }
             return URLRequest(url: url,
                               requestLike: request,
                               cachePolicy: request.cachePolicy,

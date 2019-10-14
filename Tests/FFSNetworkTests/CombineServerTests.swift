@@ -13,48 +13,114 @@ import Combine
 
 @available(OSX 10.15, iOS 13, *)
 final class CombineServerTests: XCTestCase {
-    var todos = [Todo]()
-    var fetchTodosResponse: FetchTodosResponse = emptyResponse {
-        didSet {
-            todos = fetchTodosResponse.value
-        }
-    }
     
-    // commented this test, because I don't get it to work
-    func _testTodosRx() {
+    func testTodosRx() {
         let backend = BackendRx()
         
-        _ = self.expectation(for: NSPredicate(block: { (items, userInfo) -> Bool in
-            let success = (items as! [Todo]).count > 0
-            return success
-        }), evaluatedWith: todos, handler: nil)
+        // Create the Publisher
+        let publisher = backend.loadTodosRx()
         
-        _ = backend
-            .loadTodosRx2()
-            .catch { error -> Just<[Todo]> in
-                self.todos = [Todo(userId: 1, id: 1, title: "", completed: false)]
-                    return Just([])
+        // Test the Publisher
+        let validTest = evalValidResponseTest(publisher: publisher)
+        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        validTest.cancellable?.cancel()
+    }
+    
+    func testTodosRx2() {
+        let backend = BackendRx()
+        
+        // Create the Publisher
+        let publisher = backend.loadTodosRx2()
+        
+        // Test the Publisher
+        let validTest = evalValidResponseTest(publisher: publisher)
+        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        validTest.cancellable?.cancel()
+    }
+    
+    func testSimpleStringRx() {
+        let serverConfiguration = StagingConfiguration()
+        let serverConnection = CombineServer(configuration: serverConfiguration)
+        
+        let request = Request(path: "/", baseUrl: URL(string: "https://www.farbflash.de")!)
+        
+        // Create the Publisher
+        let publisher = serverConnection.runStringTaskWith(request, encoding: .utf8)
+        
+        // Test the Publisher
+        let validTest = evalValidResponseTest(publisher: publisher)
+        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        validTest.cancellable?.cancel()
+    }
+    
+    func testInvalidUrlFailure() {
+        struct MockConfiguration: ServerConfiguring {
+            var urlComponents: URLComponents {
+                let urlComponents = URLComponents()
+                return urlComponents
             }
-            .sink(receiveCompletion: { error in
-            XCTAssertNil(error)
-        }, receiveValue: { (response) in
-            self.todos = response
-        })
-            
-        
-//        _ = backend
-//            .loadTodosRx()
-//            .map { $0 }
-//            .catch { error -> Just<FetchTodosResponse> in
-//                return Just(CombineServerTests.emptyResponse)
-//        }
-//        .assign(to: \.fetchTodosResponse, on: self)
-        
-        self.waitForExpectations(timeout: 10) { error in
-            XCTAssertNil(error)
         }
+        let serverConfiguration = MockConfiguration()
+        let serverConnection = CombineServer(configuration: serverConfiguration)
+        
+        let request = Request(path: "")
+        
+        // Create the Publisher
+        expectPreconditionFailure(expectedMessage: "Unable to create URLRequest from request:") {
+            serverConnection.runStringTaskWith(request, encoding: .utf8)
+        }
+        
+//        // Test the Publisher
+//        let validTest = evalValidResponseTest(publisher: publisher)
+//        wait(for: validTest.expectations, timeout: TimeInterval(60))
+//        validTest.cancellable?.cancel()
     }
-    private static var emptyResponse: FetchTodosResponse {
-        return try! FetchTodosResponse(data: "[]".data(using: .utf8), urlResponse: nil, sentRequest: URLRequest(url: URL(string: "http://www.farbflash.de")!))
+    
+    func evalValidResponseTest<T:Publisher>(publisher: T?, file: StaticString = #file, line: UInt = #line) -> (expectations:[XCTestExpectation], cancellable: AnyCancellable?) {
+        XCTAssertNotNil(publisher, file: file, line: line)
+        
+        let expectationFinished = expectation(description: "finished")
+        let expectationReceive = expectation(description: "receiveValue")
+        
+        let cancellable = publisher?.sink (receiveCompletion: { (completion) in
+            switch completion {
+            case .failure(let error):
+                XCTFail("Error: \(error.localizedDescription)", file: file, line: line)
+            case .finished:
+                expectationFinished.fulfill()
+            }
+        }, receiveValue: { response in
+            XCTAssertNotNil(response, file: file, line: line)
+//            print("--TEST FULFILLED--")
+//            print(response)
+//            print("------")
+            expectationReceive.fulfill()
+        })
+        return (expectations: [expectationFinished, expectationReceive], cancellable: cancellable)
     }
+    
+    func evalInvalidResponseTest<T:Publisher>(publisher: T?, file: StaticString = #file, line: UInt = #line) -> (expectations:[XCTestExpectation], cancellable: AnyCancellable?) {
+        XCTAssertNotNil(publisher, file: file, line: line)
+        
+        let expectationFinished = expectation(description: "finished")
+        let expectationFailure = expectation(description: "failure")
+        
+        let cancellable = publisher?.sink (receiveCompletion: { (completion) in
+            switch completion {
+            case .failure(let error):
+                XCTAssertNotNil(error, file: file, line: line)
+//                print("--TEST FULFILLED--")
+//                print(error.localizedDescription)
+//                print("------")
+                expectationFailure.fulfill()
+            case .finished:
+                expectationFinished.fulfill()
+//                XCTFail("This is not the expected error", file: file, line: line)
+            }
+        }, receiveValue: { response in
+            XCTAssertNil(response, file: file, line: line)
+        })
+        return (expectations: [expectationFailure, expectationFinished], cancellable: cancellable)
+    }
+    
 }

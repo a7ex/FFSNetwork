@@ -127,7 +127,7 @@ final class FFSNetworkTests: XCTestCase {
     func testNoDataNoErrorCaseTypedNetworkRequestRun() {
         let serverConnection = MockData.serverConnectionWhichReturns(data: nil, response: nil, error: nil)
         
-        let typedRequest = BackendRequest<StringResponse>()
+        let typedRequest = TypedRequest<StringResponse>()
         
         let expectation = self.expectation(description: "StringResponse request")
         serverConnection.runTaskWith(typedRequest) { (result: Result<StringResponse, Error>) in
@@ -220,7 +220,7 @@ final class FFSNetworkTests: XCTestCase {
     func testSuccessCaseTypedNetworkRequestRun() {
         let serverConnection = MockData.serverConnectionWhichReturns(data: "{userId: 1, id: 1, title: \"Todo title\", completed: true}".data(using: .utf8), response: HTTPURLResponse(url: URL(string: "http://www.farbflash.de")!, mimeType: "text/plain", expectedContentLength: 17, textEncodingName: "utf-8"), error: nil)
         
-        let typedRequest = BackendRequest<StringResponse>()
+        let typedRequest = TypedRequest<StringResponse>()
         
         let expectation = self.expectation(description: "StringResponse request")
         serverConnection.runTaskWith(typedRequest) { (result: Result<StringResponse, Error>) in
@@ -244,7 +244,7 @@ final class FFSNetworkTests: XCTestCase {
     func testErrorCaseTypedNetworkRequestRun() {
         let serverConnection = MockData.serverConnectionWhichReturns(data: "{userId: 1, id: 1, title: \"Todo title\", completed: true}".data(using: .utf8), response: URLResponse(url: URL(string: "http://www.farbflash.de")!, mimeType: "text/plain", expectedContentLength: 17, textEncodingName: "utf-8"), error: NSError(domain: "de.farbflash", code: 17, userInfo: ["description": "This is an error"]))
         
-        let typedRequest = BackendRequest<StringResponse>()
+        let typedRequest = TypedRequest<StringResponse>()
         
         let expectation = self.expectation(description: "StringResponse request")
         serverConnection.runTaskWith(typedRequest) { (result: Result<StringResponse, Error>) in
@@ -315,7 +315,7 @@ final class FFSNetworkTests: XCTestCase {
     }
     
     func testBackendRequest() throws {
-        let request = BackendRequest<StringResponse>(path: "/todos",
+        let request = TypedRequest<StringResponse>(path: "/todos",
                                                      method: .post,
                                                      headers: ["header key": "header value"],
                                                      queryItems: [URLQueryItem(name: "Query item key", value: "Query item value ö")],
@@ -335,7 +335,7 @@ final class FFSNetworkTests: XCTestCase {
     }
     
     func testBackendRequestSetHeader() {
-        var request = BackendRequest<StringResponse>()
+        var request = TypedRequest<StringResponse>()
         request.setValue("header value", forHTTPHeaderField: "header key")
         XCTAssertEqual(request.allHTTPHeaderFields, ["header key": "header value"])
         
@@ -344,7 +344,7 @@ final class FFSNetworkTests: XCTestCase {
     func testBackendRequestURLRequestCreation() throws {
         let configuration = ProductionConfiguration()
         
-        let request = BackendRequest<StringResponse>(path: "/todos",
+        let request = TypedRequest<StringResponse>(path: "/todos",
                                                      method: .post,
                                                      headers: ["header key": "header value"],
                                                      queryItems: [URLQueryItem(name: "Query item key", value: "Query item value ö")],
@@ -361,7 +361,7 @@ final class FFSNetworkTests: XCTestCase {
         XCTAssertEqual(urlRequest.cachePolicy, request.cachePolicy)
         XCTAssertEqual(urlRequest.timeoutInterval, request.timeoutInterval)
         
-        let requestWithBaseUrlOverride = BackendRequest<StringResponse>(baseUrl: URL(string: "http://www.farbflash.de")!)
+        let requestWithBaseUrlOverride = TypedRequest<StringResponse>(baseUrl: URL(string: "http://www.farbflash.de")!)
         XCTAssertEqual(requestWithBaseUrlOverride.baseUrl?.absoluteString, "http://www.farbflash.de")
         
         let urlRequestWithBaseUrlOverride = try configuration.createURLRequest(with: requestWithBaseUrlOverride)

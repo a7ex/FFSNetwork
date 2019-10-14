@@ -27,6 +27,7 @@ extension BackendRx {
         return serverConnection.runTaskWith(FetchTodosRequest())
     }
     func loadTodosRx2() -> AnyPublisher<[Todo], Error> {
-        return serverConnection.runJSONTaskWith(FetchTodosRequest())
+        let request = Request(path: "/todos")
+        return serverConnection.runJSONTaskWith(request)
     }
 }

@@ -10,7 +10,7 @@ import Foundation
 
 /// A basic implementation of a TypedNetworkRequest type
 /// Defines all required properties for a request in initializer by providing default values
-public struct BackendRequest<T: TypedNetworkResponse>: TypedNetworkRequest {
+public struct TypedRequest<T: TypedNetworkResponse>: TypedNetworkRequest {
     public typealias ReturnType = T
     public let path: String
     public let method: HTTPMethod

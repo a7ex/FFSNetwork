@@ -36,7 +36,7 @@ final class IntegrationTests: XCTestCase {
         let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage in
             print(debugMessage)
         }
-        let request = BackendRequest<StringResponse>(baseUrl: URL(string: "http://www.farbflash.de")!)
+        let request = TypedRequest<StringResponse>(baseUrl: URL(string: "http://www.farbflash.de")!)
         let expectation = self.expectation(description: "Typed html request")
         serverConnection.runTaskWith(request) { (result: Result<StringResponse, Error>) in
             switch result {
