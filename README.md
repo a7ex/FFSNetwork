@@ -90,7 +90,8 @@ The CombineServer is only available starting with Mac Os X 15 and iOS 13, as it 
 ```swift
     import SwiftUI
     import Combine
-    
+    import FFSNetwork
+
     struct ContentView: View {
         private let backend = BackendRx()
         @State private var todos = [Todo]()
@@ -100,25 +101,32 @@ The CombineServer is only available starting with Mac Os X 15 and iOS 13, as it 
             List(todos) { todo in
                 HStack {
                     Text(todo.title)
+                    Spacer()
                     if todo.completed {
                         Image(systemName: "checkmark")
                     }
                 }
+                .padding([.leading, .trailing], 8)
             }
             .onAppear {
                 self.loadTodos()
             }
-            }
         }
         
         func loadTodos() {
-            backend.loadTodosRx { result in
-                if case let .success(response) = result {
-                    DispatchQueue.main.async {
-                        self.todos = response.value
-                    }
-                }
-            }
+            cancellable = backend
+                .loadTodosRx()
+                .sink(receiveCompletion: { (error) in
+                    
+                }, receiveValue: { (response) in
+                    self.todos = response.value
+                })
+        }
+    }
+
+    struct ContentView_Previews: PreviewProvider {
+        static var previews: some View {
+            ContentView()
         }
     }
 ```
