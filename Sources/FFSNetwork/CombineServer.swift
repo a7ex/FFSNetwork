@@ -16,11 +16,14 @@ import Combine
 public struct CombineServer {
     private let urlSession: URLSession
     private let serverConfiguration: ServerConfiguring
+    private let messageHandler: ((String, CFAbsoluteTime) -> Void)
     
     public init(configuration: ServerConfiguring,
-                urlSession: URLSession = .shared) {
+                urlSession: URLSession = .shared,
+                messageHandler: (@escaping (String, CFAbsoluteTime) -> Void) = { _, _ in}) {
         self.serverConfiguration = configuration
         self.urlSession = urlSession
+        self.messageHandler = messageHandler
     }
 }
 
@@ -34,8 +37,13 @@ extension CombineServer {
         guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
             preconditionFailure("Unable to create URLRequest from request: \(request)")
         }
+        let startTime = CFAbsoluteTimeGetCurrent()
+        messageHandler(urlRequest.formattedURLRequest, 0)
         return urlSession.dataTaskPublisher(for: urlRequest)
-            .map { $0.data }
+            .map {
+                self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
+                return $0.data
+        }
             .compactMap { String(data: $0, encoding: encoding) }
             .eraseToAnyPublisher()
     }
@@ -47,9 +55,14 @@ extension CombineServer {
         guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
             preconditionFailure("Unable to create URLRequest from request: \(request)")
         }
+        let startTime = CFAbsoluteTimeGetCurrent()
         let decoder = JSONDecoder()
+        messageHandler(urlRequest.formattedURLRequest, 0)
         return urlSession.dataTaskPublisher(for: urlRequest)
-            .map { $0.data }
+            .map {
+                    self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
+                    return $0.data
+            }
             .decode(type: U.self, decoder: decoder)
             .eraseToAnyPublisher()
     }
@@ -61,8 +74,13 @@ extension CombineServer {
             guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
                 preconditionFailure("Unable to create URLRequest from request: \(request)")
             }
+            let startTime = CFAbsoluteTimeGetCurrent()
+            messageHandler(urlRequest.formattedURLRequest, 0)
             return urlSession.dataTaskPublisher(for: urlRequest)
-                .tryMap { try request.mapResponse($0.data, $0.response, urlRequest) }
+                .tryMap {
+                    self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
+                    return try request.mapResponse($0.data, $0.response, urlRequest)
+            }
                 .eraseToAnyPublisher()
     }
 }

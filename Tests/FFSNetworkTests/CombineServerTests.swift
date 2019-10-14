@@ -12,13 +12,20 @@ import Combine
 @testable import FFSNetwork
 
 @available(OSX 10.15, iOS 13, *)
-final class CombineServerTests: XCTestCase {
+class CombineServerTests: XCTestCase {
     
-    func testTodosRx() {
-        let backend = BackendRx()
+    func testTodosRxTypedNetworkRequest() {
+        let serverConfiguration = StagingConfiguration()
+        let serverConnection = CombineServer(configuration: serverConfiguration) { debugMessage, elapsedTime in
+            if elapsedTime > 0 {
+                let fileurl = URL(fileURLWithPath: #file)
+                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
+            }
+            print(debugMessage)
+        }
         
         // Create the Publisher
-        let publisher = backend.loadTodosRx()
+        let publisher: AnyPublisher<FetchTodosResponse, Error> = serverConnection.runTaskWith(FetchTodosRequest())
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
@@ -26,11 +33,19 @@ final class CombineServerTests: XCTestCase {
         validTest.cancellable?.cancel()
     }
     
-    func testTodosRx2() {
-        let backend = BackendRx()
+    func testTodosRxUsingJSONTask() {
+        let serverConfiguration = StagingConfiguration()
+        let serverConnection = CombineServer(configuration: serverConfiguration) { debugMessage, elapsedTime in
+            if elapsedTime > 0 {
+                let fileurl = URL(fileURLWithPath: #file)
+                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
+            }
+            print(debugMessage)
+        }
         
         // Create the Publisher
-        let publisher = backend.loadTodosRx2()
+        let request = Request(path: "/todos")
+        let publisher: AnyPublisher<[Todo], Error> = serverConnection.runJSONTaskWith(request)
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
@@ -40,7 +55,13 @@ final class CombineServerTests: XCTestCase {
     
     func testSimpleStringRx() {
         let serverConfiguration = StagingConfiguration()
-        let serverConnection = CombineServer(configuration: serverConfiguration)
+        let serverConnection = CombineServer(configuration: serverConfiguration) { debugMessage, elapsedTime in
+            if elapsedTime > 0 {
+                let fileurl = URL(fileURLWithPath: #file)
+                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
+            }
+            print(debugMessage)
+        }
         
         let request = Request(path: "/", baseUrl: URL(string: "https://www.farbflash.de")!)
         
@@ -51,29 +72,6 @@ final class CombineServerTests: XCTestCase {
         let validTest = evalValidResponseTest(publisher: publisher)
         wait(for: validTest.expectations, timeout: TimeInterval(60))
         validTest.cancellable?.cancel()
-    }
-    
-    func testInvalidUrlFailure() {
-        struct MockConfiguration: ServerConfiguring {
-            var urlComponents: URLComponents {
-                let urlComponents = URLComponents()
-                return urlComponents
-            }
-        }
-        let serverConfiguration = MockConfiguration()
-        let serverConnection = CombineServer(configuration: serverConfiguration)
-        
-        let request = Request(path: "")
-        
-        // Create the Publisher
-        expectPreconditionFailure(expectedMessage: "Unable to create URLRequest from request:") {
-            serverConnection.runStringTaskWith(request, encoding: .utf8)
-        }
-        
-//        // Test the Publisher
-//        let validTest = evalValidResponseTest(publisher: publisher)
-//        wait(for: validTest.expectations, timeout: TimeInterval(60))
-//        validTest.cancellable?.cancel()
     }
     
     func evalValidResponseTest<T:Publisher>(publisher: T?, file: StaticString = #file, line: UInt = #line) -> (expectations:[XCTestExpectation], cancellable: AnyCancellable?) {
@@ -91,9 +89,9 @@ final class CombineServerTests: XCTestCase {
             }
         }, receiveValue: { response in
             XCTAssertNotNil(response, file: file, line: line)
-//            print("--TEST FULFILLED--")
-//            print(response)
-//            print("------")
+            //            print("--TEST FULFILLED--")
+            //            print(response)
+            //            print("------")
             expectationReceive.fulfill()
         })
         return (expectations: [expectationFinished, expectationReceive], cancellable: cancellable)
@@ -109,13 +107,13 @@ final class CombineServerTests: XCTestCase {
             switch completion {
             case .failure(let error):
                 XCTAssertNotNil(error, file: file, line: line)
-//                print("--TEST FULFILLED--")
-//                print(error.localizedDescription)
-//                print("------")
+                //                print("--TEST FULFILLED--")
+                //                print(error.localizedDescription)
+                //                print("------")
                 expectationFailure.fulfill()
             case .finished:
                 expectationFinished.fulfill()
-//                XCTFail("This is not the expected error", file: file, line: line)
+                //                XCTFail("This is not the expected error", file: file, line: line)
             }
         }, receiveValue: { response in
             XCTAssertNil(response, file: file, line: line)

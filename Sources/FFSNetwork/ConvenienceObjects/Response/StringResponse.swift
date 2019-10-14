@@ -37,13 +37,6 @@ public struct StringResponse: TypedNetworkResponse {
         }
     }
     
-    public func jobDetailsAfter(_ elapsedSeconds: Double) -> String {
-        let elapsed = formatter.string(from: NSNumber(value: elapsedSeconds)) ?? ""
-        return sentRequest.formattedURLRequest + "\n" +
-            "\nELAPSED TIME: \(elapsed) seconds...\n" +
-            (httpURLResponse?.formattedURLResponse ?? "No response!")
-    }
-    
     private let formatter: NumberFormatter = {
         let fmt = NumberFormatter()
         fmt.maximumFractionDigits = 3

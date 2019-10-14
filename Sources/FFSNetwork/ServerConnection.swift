@@ -79,7 +79,7 @@ import Foundation
 public final class ServerConnection {
     private let urlSession: DataTaskCreator
     private let serverConfiguration: ServerConfiguring
-    private let messageHandler: ((String) -> Void)
+    private let messageHandler: ((String, CFAbsoluteTime) -> Void)
     
     /// Create an instance of a server connection using a configuration of type ServerConfiguring
     /// optionally takes a sessionConfiguration of type URLSessionConfiguration. Defaults to the default configuration
@@ -92,7 +92,7 @@ public final class ServerConnection {
     ///   - messageHandler:  an opptional closure to receive status messages as loggable strings (useful for debugging)
     public init(configuration: ServerConfiguring,
                 urlSession: DataTaskCreator? = nil,
-                messageHandler: (@escaping (String) -> Void) = { _ in}) {
+                messageHandler: (@escaping (String, CFAbsoluteTime) -> Void) = { _, _ in}) {
         self.serverConfiguration = configuration
         self.urlSession = urlSession ?? URLSession(configuration: URLSessionConfiguration.default)
         self.messageHandler = messageHandler
@@ -172,15 +172,17 @@ public final class ServerConnection {
         completion: @escaping (Result<NetworkResultData?, Error>) -> Void
         ) throws -> URLSessionTask {
         do {
+            let startTime = CFAbsoluteTimeGetCurrent()
+            
             let urlRequest = try serverConfiguration.createURLRequest(with: request)
-            messageHandler(urlRequest.formattedURLRequest)
+            messageHandler(urlRequest.formattedURLRequest, 0)
             return urlSession.dataTask(with: urlRequest) { [weak self] (data, response, error) in
                 if let error = error {
-                    self?.messageHandler(error.localizedDescription)
+                    self?.messageHandler(error.localizedDescription, CFAbsoluteTimeGetCurrent() - startTime)
                     completion(Result.failure(ServerConnectionError.httpErrorNotNil(error, urlRequest, response, data)))
                 }
                 else {
-                    self?.messageHandler(response?.formattedURLResponse ?? "- No response data! -")
+                    self?.messageHandler(response?.formattedURLResponse ?? "- No response data! -", CFAbsoluteTimeGetCurrent() - startTime)
                     completion(Result.success(NetworkResultData(data: data, response: response, error: error)))
                 }
             }
@@ -222,16 +224,17 @@ public final class ServerConnection {
         completion: @escaping (Result<T.ReturnType, Error>) -> Void
         ) throws -> URLSessionTask {
         do {
+            let startTime = CFAbsoluteTimeGetCurrent()
             let urlRequest = try serverConfiguration.createURLRequest(with: request)
-            messageHandler(urlRequest.formattedURLRequest)
+            messageHandler(urlRequest.formattedURLRequest, 0)
             return urlSession.dataTask(with: urlRequest) { [weak self] (data, response, error) in
                 if let error = error {
-                    self?.messageHandler(error.localizedDescription)
+                    self?.messageHandler(error.localizedDescription, CFAbsoluteTimeGetCurrent() - startTime)
                     completion(Result.failure(ServerConnectionError.httpErrorNotNil(error, urlRequest, response, data)))
                     return
                 }
                 do {
-                    self?.messageHandler(response?.formattedURLResponse ?? "- No response data! -")
+                    self?.messageHandler(response?.formattedURLResponse ?? "- No response data! -", CFAbsoluteTimeGetCurrent() - startTime)
                     let resp = try request.mapResponse(data, response, urlRequest)
                     completion(Result.success(resp))
                 } catch {

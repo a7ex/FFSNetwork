@@ -9,10 +9,14 @@
 import XCTest
 @testable import FFSNetwork
 
-final class IntegrationTests: XCTestCase {
+class IntegrationTests: XCTestCase {
     func testSimpleHtmlResponse() {
         let urlSession = URLSession(configuration: .default)
-        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage in
+        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage, elapsedTime in
+            if elapsedTime > 0 {
+                let fileurl = URL(fileURLWithPath: #file)
+                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
+            }
             print(debugMessage)
         }
         let request = URLRequest(url: URL(string: "https://www.farbflash.de")!)
@@ -33,7 +37,11 @@ final class IntegrationTests: XCTestCase {
     
     func testTypedResponse() {
         let urlSession = URLSession(configuration: .default)
-        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage in
+        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage, elapsedTime in
+            if elapsedTime > 0 {
+                let fileurl = URL(fileURLWithPath: #file)
+                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
+            }
             print(debugMessage)
         }
         let request = TypedRequest<StringResponse>(baseUrl: URL(string: "http://www.farbflash.de")!)
@@ -62,7 +70,11 @@ final class IntegrationTests: XCTestCase {
     
     func testJSONResponse() {
         let urlSession = URLSession(configuration: .default)
-        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage in
+        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage, elapsedTime in
+            if elapsedTime > 0 {
+                let fileurl = URL(fileURLWithPath: #file)
+                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
+            }
             print(debugMessage)
         }
         let request = FetchTodosRequest()
@@ -83,7 +95,11 @@ final class IntegrationTests: XCTestCase {
     
     func testTypedJSONResponse() {
         let urlSession = URLSession(configuration: .default)
-        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage in
+        let serverConnection = ServerConnection(configuration: StagingConfiguration(), urlSession: urlSession) { debugMessage, elapsedTime in
+            if elapsedTime > 0 {
+                let fileurl = URL(fileURLWithPath: #file)
+                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
+            }
             print(debugMessage)
         }
         let request = FetchTodosRequest()

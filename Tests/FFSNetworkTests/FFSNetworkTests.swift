@@ -1,7 +1,7 @@
 import XCTest
 @testable import FFSNetwork
 
-final class FFSNetworkTests: XCTestCase {
+class FFSNetworkTests: XCTestCase {
     
     func testNoDataNoErrorCaseUrlRequestSend() {
         let serverConnection = MockData.serverConnectionWhichReturns(data: nil, response: nil, error: nil)
@@ -373,6 +373,16 @@ final class FFSNetworkTests: XCTestCase {
         XCTAssertEqual(request.path, "/todos")
         XCTAssertEqual(request.allHTTPHeaderFields?["Accept"], "application/json")
         XCTAssertEqual(request.method, .get)
+    }
+    
+    func testTodosRequestHeaders() {
+        var request = FetchTodosRequest(headers: nil)
+        XCTAssertEqual(request.path, "/todos")
+        XCTAssertNil(request.allHTTPHeaderFields?["Accept"])
+        XCTAssertEqual(request.method, .get)
+        request.setValue("Custom value", forHTTPHeaderField: "Custom key")
+        XCTAssertEqual(request.allHTTPHeaderFields?["Custom key"], "Custom value")
+        
     }
     
     static var allTests = [
