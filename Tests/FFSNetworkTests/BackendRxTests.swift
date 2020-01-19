@@ -12,7 +12,7 @@ import Combine
 @testable import FFSNetwork
 
 @available(OSX 10.15, iOS 13, *)
-class BackendRxTests: CombineServerTests {
+class BackendRxTests: XCTestCase {
     
     func testTodosRx() {
         let backend = BackendRx()
@@ -22,7 +22,7 @@ class BackendRxTests: CombineServerTests {
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
-        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        wait(for: validTest.expectations, timeout: TimeInterval(5))
         validTest.cancellable?.cancel()
     }
     
@@ -34,7 +34,7 @@ class BackendRxTests: CombineServerTests {
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
-        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        wait(for: validTest.expectations, timeout: TimeInterval(5))
         validTest.cancellable?.cancel()
     }
 }

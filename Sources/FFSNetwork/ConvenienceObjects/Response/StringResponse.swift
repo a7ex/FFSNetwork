@@ -31,21 +31,12 @@ public struct StringResponse: TypedNetworkResponse {
         }
         if let str = String(data: data, encoding: .utf8) {
             self.value = str
-        }
-        else if let str = String(data: data, encoding: .isoLatin1) {
+        } else if let str = String(data: data, encoding: .isoLatin1) {
             self.value = str
-        }
-        else {
+        } else {
             throw StringResponseError.unexpectedResponse(data, urlResponse)
         }
     }
-    
-    private let formatter: NumberFormatter = {
-        let fmt = NumberFormatter()
-        fmt.maximumFractionDigits = 3
-        fmt.minimumIntegerDigits = 1
-        return fmt
-    }()
 }
 
 public enum StringResponseError: Error {

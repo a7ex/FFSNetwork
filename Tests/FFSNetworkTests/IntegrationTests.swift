@@ -23,11 +23,19 @@ class IntegrationTests: XCTestCase {
         let expectation = self.expectation(description: "Simple html request")
         serverConnection.sendRequest(request) { (data, response, error) in
             XCTAssertNil(error)
-            XCTAssertNotNil(String(data: data!, encoding: .utf8))
+            if let data = data {
+            XCTAssertNotNil(String(data: data, encoding: .utf8))
+            } else {
+                XCTFail("There should be data")
+            }
             XCTAssertNotNil(response)
-            let httpResponse = response as! HTTPURLResponse
-            XCTAssertTrue(httpResponse.statusCode == 200)
-            XCTAssertTrue((httpResponse.allHeaderFields["Content-Type"] as? String) == "text/html")
+            if let httpResponse = response as? HTTPURLResponse {
+            XCTAssertEqual(httpResponse.statusCode, 200)
+            XCTAssertEqual((httpResponse.allHeaderFields["Content-Type"] as? String), "text/html")
+            } else {
+                XCTFail("There should be a http response")
+            }
+            
             expectation.fulfill()
         }
         self.waitForExpectations(timeout: 10) { error in
@@ -54,9 +62,12 @@ class IntegrationTests: XCTestCase {
                 XCTAssertGreaterThan(stringResponse.value.count, 0)
                 XCTAssertTrue(stringResponse.value.contains("<title>Farbflash Home</title>"))
                 
-                let httpResponse = stringResponse.urlResponse as! HTTPURLResponse
+                if let httpResponse = stringResponse.urlResponse as? HTTPURLResponse {
                 XCTAssertEqual(httpResponse.statusCode, 200)
                 XCTAssertEqual((httpResponse.allHeaderFields["Content-Type"] as? String), "text/html")
+                } else {
+                               XCTFail("There should be a http response")
+                           }
                 
             case .failure(let error):
                 XCTFail("Received error: \(error.localizedDescription)")
@@ -81,11 +92,18 @@ class IntegrationTests: XCTestCase {
         let expectation = self.expectation(description: "JSON request")
         serverConnection.sendNetworkRequest(request) { (data, response, error) in
             XCTAssertNil(error)
-            XCTAssertNotNil(String(data: data!, encoding: .utf8))
+            if let data = data {
+            XCTAssertNotNil(String(data: data, encoding: .utf8))
+            } else {
+                XCTFail("There should be data")
+            }
             XCTAssertNotNil(response)
-            let httpResponse = response as! HTTPURLResponse
+            if let httpResponse = response as? HTTPURLResponse {
             XCTAssertEqual(httpResponse.statusCode, 200)
             XCTAssertEqual((httpResponse.allHeaderFields["Content-Type"] as? String), "application/json; charset=utf-8")
+            } else {
+                XCTFail("There should be a http response")
+            }
             expectation.fulfill()
         }
         self.waitForExpectations(timeout: 10) { error in

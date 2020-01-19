@@ -44,14 +44,14 @@ extension CombineServer {
                 self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
                 return $0.data
         }
-            .compactMap { String(data: $0, encoding: encoding) }
-            .eraseToAnyPublisher()
+        .compactMap { String(data: $0, encoding: encoding) }
+        .eraseToAnyPublisher()
     }
     
     /// Run a request and receive a JSON object upon success
     /// The generic return type U must conform to the Decodable protocol
     /// - Parameter request: a request which conforms to NetworkRequest (URLRequest does)
-    public func runJSONTaskWith<T: NetworkRequest, U>(_ request: T) -> AnyPublisher<U, Error> where U: Decodable {
+    public func runJSONTaskWith<T: NetworkRequest, U>(_ request: T) -> AnyPublisher<U, ServerConnectionError> where U: Decodable {
         guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
             preconditionFailure("Unable to create URLRequest from request: \(request)")
         }
@@ -60,17 +60,24 @@ extension CombineServer {
         messageHandler(urlRequest.formattedURLRequest, 0)
         return urlSession.dataTaskPublisher(for: urlRequest)
             .map {
-                    self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
-                    return $0.data
+                self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
+                return $0.data
             }
             .decode(type: U.self, decoder: decoder)
+            .mapError { error in
+                if let error = error as? ServerConnectionError {
+                    return error
+                } else {
+                    return ServerConnectionError.apiError(reason: error.localizedDescription)
+                }
+            }
             .eraseToAnyPublisher()
     }
     
     /// Run a typed request and receive the requested type upon success
     /// - Parameter request: a request which conforms to TypedNetworkRequest
-    public func runTaskWith<T: TypedNetworkRequest>(_ request: T) ->
-        AnyPublisher<T.ReturnType, Error> where T.ReturnType.ResponseType: Decodable {
+    public func runTypedTaskWith<T: TypedNetworkRequest>(_ request: T) ->
+        AnyPublisher<T.ReturnType, ServerConnectionError> where T.ReturnType.ResponseType: Decodable {
             guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
                 preconditionFailure("Unable to create URLRequest from request: \(request)")
             }
@@ -80,7 +87,22 @@ extension CombineServer {
                 .tryMap {
                     self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
                     return try request.mapResponse($0.data, $0.response, urlRequest)
-            }
+                }
+                .mapError { error in
+                    if let error = error as? ServerConnectionError {
+                        return error
+                    } else {
+                        return ServerConnectionError.apiError(reason: error.localizedDescription)
+                    }
+                }
                 .eraseToAnyPublisher()
     }
 }
+
+@available(OSX 10.15, iOS 13.0, *)
+public protocol DataTaskPublisherCreator {
+    func dataTaskPublisher(for request: URLRequest) -> URLSession.DataTaskPublisher
+}
+
+@available(OSX 10.15, iOS 13.0, *)
+extension URLSession: DataTaskPublisherCreator { }

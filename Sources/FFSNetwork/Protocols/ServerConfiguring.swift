@@ -12,7 +12,7 @@ import Foundation
 /// All it provides is an URLComponents object.
 /// It provides a default implementation to create a regular *URLRequest" from any object, conforming to "NetworkRequest*
 /// *ServerConfiguring* basically only provides the scheme and host of the server. However, if the request contains
-/// a 'baseUrl' property, the scheme and host from that baseUrl are taken. In that case ServerConfiguring's urlComponents
+/// a 'baseUrl' property, the scheme and host from that request.baseUrl are taken. In that case ServerConfiguring's urlComponents
 /// are not used at all. Rather everything to construct the URLRequest is read from the parameter 'request', which
 /// is an object conforming to *NetworkRequest*
 public protocol ServerConfiguring {
@@ -29,7 +29,7 @@ public extension ServerConfiguring {
         // if request.baseUrl?.host is missing we use the host from the ServerConfiguration:
         urlComps.host = request.baseUrl?.host ?? urlComponents.host
         
-        if let port = urlComponents.port {
+        if let port = request.baseUrl?.port ?? urlComponents.port {
             urlComps.port = port
         }
         

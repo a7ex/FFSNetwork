@@ -23,10 +23,10 @@ struct BackendRx {
 
 @available(OSX 10.15, iOS 13, *)
 extension BackendRx {
-    func loadTodosRx() -> AnyPublisher<FetchTodosResponse, Error> {
-        return serverConnection.runTaskWith(FetchTodosRequest())
+    func loadTodosRx() -> AnyPublisher<FetchTodosResponse, ServerConnectionError> {
+        return serverConnection.runTypedTaskWith(FetchTodosRequest())
     }
-    func loadTodosRx2() -> AnyPublisher<[Todo], Error> {
+    func loadTodosRx2() -> AnyPublisher<[Todo], ServerConnectionError> {
         let request = Request(path: "/todos")
         return serverConnection.runJSONTaskWith(request)
     }

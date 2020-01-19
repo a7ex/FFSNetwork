@@ -10,7 +10,7 @@ import Foundation
 
 /// FFSNetwork own error type
 /// Use ErrorMessageprovider to get a short message string for each of these errors
-public enum ServerConnectionError: Error {
+public enum ServerConnectionError: Error, LocalizedError {
     /// Error is not nil
     case httpErrorNotNil(Error, URLRequest, URLResponse?, Data?)
     
@@ -35,4 +35,35 @@ public enum ServerConnectionError: Error {
     
     /// Unable to create the URL from URLComponents
     case unableToCreateURLFromComponents(URLComponents)
+    
+    /// just an error with a string description
+    case apiError(reason: String)
+    
+    /// Unknown error
+    case unknown
+    
+    public var errorDescription: String? {
+        switch self {
+        case .httpErrorNotNil(let error, _, _, _):
+            return error.localizedDescription
+        case .dataDecodingError(let error, _, _, _):
+            return "Error decoding data. (Error: \(error.localizedDescription))"
+        case .noHTTPResponse(_, let response, _):
+            return response?.formattedURLResponse ?? "Unknown error, no response provided."
+        case .descriptiveServerError(let description):
+            return description
+        case .httpError(let errorCode):
+            return "Error with HTTP error code: \(errorCode)"
+        case .unableToCreateURLFromString(let urlString):
+            return "Unable to create URL from string: \(urlString)"
+        case .unableToCreateURLFromComponents(let urlComponents):
+            return "Unable to create URL from urlComponents: \(urlComponents)"
+        case .apiError(let reason):
+            return reason
+        case .unexpectedResponse:
+            return "Unexpected response"
+        case .unknown:
+            return "Unknown error"
+        }
+    }
 }

@@ -25,11 +25,11 @@ class CombineServerTests: XCTestCase {
         }
         
         // Create the Publisher
-        let publisher: AnyPublisher<FetchTodosResponse, Error> = serverConnection.runTaskWith(FetchTodosRequest())
+        let publisher: AnyPublisher<FetchTodosResponse, ServerConnectionError> = serverConnection.runTypedTaskWith(FetchTodosRequest())
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
-        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        wait(for: validTest.expectations, timeout: TimeInterval(5))
         validTest.cancellable?.cancel()
     }
     
@@ -45,11 +45,11 @@ class CombineServerTests: XCTestCase {
         
         // Create the Publisher
         let request = Request(path: "/todos")
-        let publisher: AnyPublisher<[Todo], Error> = serverConnection.runJSONTaskWith(request)
+        let publisher: AnyPublisher<[Todo], ServerConnectionError> = serverConnection.runJSONTaskWith(request)
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
-        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        wait(for: validTest.expectations, timeout: TimeInterval(5))
         validTest.cancellable?.cancel()
     }
     
@@ -70,55 +70,127 @@ class CombineServerTests: XCTestCase {
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
-        wait(for: validTest.expectations, timeout: TimeInterval(60))
+        wait(for: validTest.expectations, timeout: TimeInterval(5))
         validTest.cancellable?.cancel()
     }
     
-    func evalValidResponseTest<T:Publisher>(publisher: T?, file: StaticString = #file, line: UInt = #line) -> (expectations:[XCTestExpectation], cancellable: AnyCancellable?) {
+    func testMockedCombineNetworkCall() {
+        let typedRequest = TypedRequest<StringResponse>()
+        let expectedValue = ["key": "value"]
+        
+        let url = Mocks.mockUrlComponents.url!.appendingPathComponent(typedRequest.path)
+        
+        let expectedData = try! JSONEncoder().encode(expectedValue)
+        let expectedResponse = HTTPURLResponse(
+            url: url,
+            mimeType: "text/plain",
+            expectedContentLength: expectedData.count,
+            textEncodingName: "utf-8"
+        )
+        let serverConnection = Mocks.mockedCombineServerReturning(
+            data: expectedData,
+            response: expectedResponse,
+            error: nil,
+            url: url
+        )
+        
+        let publisher: AnyPublisher<[String: String], ServerConnectionError> = serverConnection.runJSONTaskWith(URLRequest(url: url))
+        
+        // Test the Publisher
+        let validTest = evalValidResponseTest(publisher: publisher) { value in
+            if let dict = value as? [String: String] {
+                XCTAssertEqual(dict["key"], expectedValue["key"])
+            } else {
+                XCTFail("Expected value")
+            }
+        }
+        wait(for: validTest.expectations, timeout: TimeInterval(5))
+        validTest.cancellable?.cancel()
+    }
+    
+    func testMockedCombineTypedNetworkCall() {
+        let typedRequest = FetchTodosRequest()
+        
+        let expectedString = "[{\"userId\": 1, \"id\": 1, \"title\": \"Todo title\", \"completed\": true}]"
+        let url = Mocks.mockUrlComponents.url!.appendingPathComponent(typedRequest.path)
+        let expectedData = expectedString.data(using: .utf8)!
+        let expectedResponse = HTTPURLResponse(
+            url: url,
+            mimeType: "text/plain",
+            expectedContentLength: expectedData.count,
+            textEncodingName: "utf-8"
+        )
+        let serverConnection = Mocks.mockedCombineServerReturning(
+            data: expectedData,
+            response: expectedResponse,
+            error: nil,
+            url: url
+        )
+        
+        let publisher: AnyPublisher<FetchTodosResponse, ServerConnectionError> = serverConnection.runTypedTaskWith(typedRequest)
+        
+        // Test the Publisher
+        let validTest = evalValidResponseTest(publisher: publisher) { value in
+            if let response = value as? FetchTodosResponse {
+                let todos = response.value
+                if let todo = todos.first {
+                    XCTAssertEqual(todo.title, "Todo title")
+                    XCTAssertEqual(todo.id, 1)
+                    XCTAssertEqual(todo.userId, 1)
+                    XCTAssertEqual(todo.completed, true)
+                } else {
+                    XCTFail("Expected one element")
+                }
+            } else {
+                XCTFail("Expected value")
+            }
+        }
+        wait(for: validTest.expectations, timeout: TimeInterval(5))
+        validTest.cancellable?.cancel()
+    }
+}
+
+@available(OSX 10.15, iOS 13, *)
+extension XCTestCase {
+    func evalValidResponseTest<T:Publisher>(publisher: T?, file: StaticString = #file, line: UInt = #line, evaluation: @escaping ((Any) -> Void) = { _ in }) -> (expectations:[XCTestExpectation], cancellable: AnyCancellable?) {
         XCTAssertNotNil(publisher, file: file, line: line)
         
         let expectationFinished = expectation(description: "finished")
-        let expectationReceive = expectation(description: "receiveValue")
         
         let cancellable = publisher?.sink (receiveCompletion: { (completion) in
             switch completion {
             case .failure(let error):
-                XCTFail("Error: \(error.localizedDescription)", file: file, line: line)
+                if let serverError = error as? ServerConnectionError {
+                    XCTFail("Error: \(ErrorMessageProvider.errorMessageFor(serverError))", file: file, line: line)
+                } else {
+                    XCTFail("Error: \(error.localizedDescription)", file: file, line: line)
+                }
+                expectationFinished.fulfill()
             case .finished:
                 expectationFinished.fulfill()
             }
         }, receiveValue: { response in
-            XCTAssertNotNil(response, file: file, line: line)
-            //            print("--TEST FULFILLED--")
-            //            print(response)
-            //            print("------")
-            expectationReceive.fulfill()
+            evaluation(response)
         })
-        return (expectations: [expectationFinished, expectationReceive], cancellable: cancellable)
+        return (expectations: [expectationFinished], cancellable: cancellable)
     }
     
     func evalInvalidResponseTest<T:Publisher>(publisher: T?, file: StaticString = #file, line: UInt = #line) -> (expectations:[XCTestExpectation], cancellable: AnyCancellable?) {
         XCTAssertNotNil(publisher, file: file, line: line)
         
         let expectationFinished = expectation(description: "finished")
-        let expectationFailure = expectation(description: "failure")
         
         let cancellable = publisher?.sink (receiveCompletion: { (completion) in
             switch completion {
             case .failure(let error):
                 XCTAssertNotNil(error, file: file, line: line)
-                //                print("--TEST FULFILLED--")
-                //                print(error.localizedDescription)
-                //                print("------")
-                expectationFailure.fulfill()
+                expectationFinished.fulfill()
             case .finished:
                 expectationFinished.fulfill()
-                //                XCTFail("This is not the expected error", file: file, line: line)
             }
         }, receiveValue: { response in
             XCTAssertNil(response, file: file, line: line)
         })
-        return (expectations: [expectationFailure, expectationFinished], cancellable: cancellable)
+        return (expectations: [expectationFinished], cancellable: cancellable)
     }
-    
 }

@@ -25,7 +25,7 @@ import Foundation
 ///
 ///        func loadSomeText(_ completion: @escaping (Result<StringResponse, Error>) -> Void) {
 ///            let request = BackendRequest<StringResponse>(path: "/someText")
-///            serverConnection.runTaskWith(request, completion: completion)
+///            serverConnection.runTypedTaskWith(request, completion: completion)
 ///        }
 ///    }
 ///```
@@ -41,7 +41,7 @@ import Foundation
 /// ```
 ///     func loadTodos(_ completion: @escaping (Result<FetchTodosResponse, Error>) -> Void) {
 ///         let request = FetchTodosRequest()
-///         serverConnection.runTaskWith(request, completion: completion)
+///         serverConnection.runTypedTaskWith(request, completion: completion)
 ///     }
 /// ```
 /// Now when using the 'Backend' in the UI Layer (UIViewController subclass) you get back an array of 'Todo' objects.
@@ -180,8 +180,7 @@ public final class ServerConnection {
                 if let error = error {
                     self?.messageHandler(error.localizedDescription, CFAbsoluteTimeGetCurrent() - startTime)
                     completion(Result.failure(ServerConnectionError.httpErrorNotNil(error, urlRequest, response, data)))
-                }
-                else {
+                } else {
                     self?.messageHandler(response?.formattedURLResponse ?? "- No response data! -", CFAbsoluteTimeGetCurrent() - startTime)
                     completion(Result.success(NetworkResultData(data: data, response: response, error: error)))
                 }
