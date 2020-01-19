@@ -14,11 +14,12 @@ import Combine
 @available(OSX 10.15, iOS 13, *)
 class BackendRxTests: XCTestCase {
     
-    func testTodosRx() {
-        let backend = BackendRx()
+    // Requires online connection to succeed
+    func testTodosRxWithTodoRequest() {
+        let backend = BackendCombine() // Server with StagingConfiguration(): "https://jsonplaceholder.typicode.com"
         
         // Create the Publisher
-        let publisher = backend.loadTodosRx()
+        let publisher = backend.loadTodosAsTodoResponse() // "https://jsonplaceholder.typicode.com/todos"
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
@@ -26,11 +27,12 @@ class BackendRxTests: XCTestCase {
         validTest.cancellable?.cancel()
     }
     
-    func testTodosRx2() {
-        let backend = BackendRx()
+    // Requires online connection to succeed
+    func testTodosRxWithTypedRequest() {
+        let backend = BackendCombine() // Server with StagingConfiguration(): "https://jsonplaceholder.typicode.com"
         
         // Create the Publisher
-        let publisher = backend.loadTodosRx2()
+        let publisher = backend.loadTodosAsJSONRequest() // "https://jsonplaceholder.typicode.com/todos"
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)

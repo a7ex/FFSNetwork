@@ -14,6 +14,7 @@ import Combine
 @available(OSX 10.15, iOS 13, *)
 class CombineServerTests: XCTestCase {
     
+    // Requires online connection to succeed
     func testTodosRxTypedNetworkRequest() {
         let serverConfiguration = StagingConfiguration()
         let serverConnection = CombineServer(configuration: serverConfiguration) { debugMessage, elapsedTime in
@@ -28,11 +29,25 @@ class CombineServerTests: XCTestCase {
         let publisher: AnyPublisher<FetchTodosResponse, ServerConnectionError> = serverConnection.runTypedTaskWith(FetchTodosRequest())
         
         // Test the Publisher
-        let validTest = evalValidResponseTest(publisher: publisher)
-        wait(for: validTest.expectations, timeout: TimeInterval(5))
-        validTest.cancellable?.cancel()
+        let expectationFinished = expectation(description: "finished")
+        let cancellable = publisher
+            .sink (receiveCompletion: { (completion) in
+                switch completion {
+                case .failure(let error):
+                    XCTFail("Error: \(ErrorMessageProvider.errorMessageFor(error))")
+                    expectationFinished.fulfill()
+                case .finished:
+                    expectationFinished.fulfill()
+                }
+            }, receiveValue: { response in
+                XCTAssertNotNil(response.value.first)
+            })
+        
+        wait(for: [expectationFinished], timeout: TimeInterval(5))
+        cancellable.cancel()
     }
     
+    // Requires online connection to succeed
     func testTodosRxUsingJSONTask() {
         let serverConfiguration = StagingConfiguration()
         let serverConnection = CombineServer(configuration: serverConfiguration) { debugMessage, elapsedTime in
@@ -44,7 +59,7 @@ class CombineServerTests: XCTestCase {
         }
         
         // Create the Publisher
-        let request = Request(path: "/todos")
+        let request = Request(path: "/todos", cachePolicy: URLRequest.CachePolicy.reloadIgnoringCacheData)
         let publisher: AnyPublisher<[Todo], ServerConnectionError> = serverConnection.runJSONTaskWith(request)
         
         // Test the Publisher
@@ -53,6 +68,7 @@ class CombineServerTests: XCTestCase {
         validTest.cancellable?.cancel()
     }
     
+    // Requires online connection to succeed
     func testSimpleStringRx() {
         let serverConfiguration = StagingConfiguration()
         let serverConnection = CombineServer(configuration: serverConfiguration) { debugMessage, elapsedTime in
@@ -63,88 +79,13 @@ class CombineServerTests: XCTestCase {
             print(debugMessage)
         }
         
-        let request = Request(path: "/", baseUrl: URL(string: "https://www.farbflash.de")!)
+        let request = Request(path: "/", cachePolicy: URLRequest.CachePolicy.reloadIgnoringCacheData, baseUrl: URL(string: "https://www.farbflash.de")!)
         
         // Create the Publisher
         let publisher = serverConnection.runStringTaskWith(request, encoding: .utf8)
         
         // Test the Publisher
         let validTest = evalValidResponseTest(publisher: publisher)
-        wait(for: validTest.expectations, timeout: TimeInterval(5))
-        validTest.cancellable?.cancel()
-    }
-    
-    func testMockedCombineNetworkCall() {
-        let typedRequest = TypedRequest<StringResponse>()
-        let expectedValue = ["key": "value"]
-        
-        let url = Mocks.mockUrlComponents.url!.appendingPathComponent(typedRequest.path)
-        
-        let expectedData = try! JSONEncoder().encode(expectedValue)
-        let expectedResponse = HTTPURLResponse(
-            url: url,
-            mimeType: "text/plain",
-            expectedContentLength: expectedData.count,
-            textEncodingName: "utf-8"
-        )
-        let serverConnection = Mocks.mockedCombineServerReturning(
-            data: expectedData,
-            response: expectedResponse,
-            error: nil,
-            url: url
-        )
-        
-        let publisher: AnyPublisher<[String: String], ServerConnectionError> = serverConnection.runJSONTaskWith(URLRequest(url: url))
-        
-        // Test the Publisher
-        let validTest = evalValidResponseTest(publisher: publisher) { value in
-            if let dict = value as? [String: String] {
-                XCTAssertEqual(dict["key"], expectedValue["key"])
-            } else {
-                XCTFail("Expected value")
-            }
-        }
-        wait(for: validTest.expectations, timeout: TimeInterval(5))
-        validTest.cancellable?.cancel()
-    }
-    
-    func testMockedCombineTypedNetworkCall() {
-        let typedRequest = FetchTodosRequest()
-        
-        let expectedString = "[{\"userId\": 1, \"id\": 1, \"title\": \"Todo title\", \"completed\": true}]"
-        let url = Mocks.mockUrlComponents.url!.appendingPathComponent(typedRequest.path)
-        let expectedData = expectedString.data(using: .utf8)!
-        let expectedResponse = HTTPURLResponse(
-            url: url,
-            mimeType: "text/plain",
-            expectedContentLength: expectedData.count,
-            textEncodingName: "utf-8"
-        )
-        let serverConnection = Mocks.mockedCombineServerReturning(
-            data: expectedData,
-            response: expectedResponse,
-            error: nil,
-            url: url
-        )
-        
-        let publisher: AnyPublisher<FetchTodosResponse, ServerConnectionError> = serverConnection.runTypedTaskWith(typedRequest)
-        
-        // Test the Publisher
-        let validTest = evalValidResponseTest(publisher: publisher) { value in
-            if let response = value as? FetchTodosResponse {
-                let todos = response.value
-                if let todo = todos.first {
-                    XCTAssertEqual(todo.title, "Todo title")
-                    XCTAssertEqual(todo.id, 1)
-                    XCTAssertEqual(todo.userId, 1)
-                    XCTAssertEqual(todo.completed, true)
-                } else {
-                    XCTFail("Expected one element")
-                }
-            } else {
-                XCTFail("Expected value")
-            }
-        }
         wait(for: validTest.expectations, timeout: TimeInterval(5))
         validTest.cancellable?.cancel()
     }

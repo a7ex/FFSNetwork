@@ -19,7 +19,7 @@ class IntegrationTests: XCTestCase {
             }
             print(debugMessage)
         }
-        let request = URLRequest(url: URL(string: "https://www.farbflash.de")!)
+        let request = URLRequest(url: URL(string: "https://www.farbflash.de")!, cachePolicy: URLRequest.CachePolicy.reloadIgnoringCacheData)
         let expectation = self.expectation(description: "Simple html request")
         serverConnection.sendRequest(request) { (data, response, error) in
             XCTAssertNil(error)

@@ -621,8 +621,4 @@ class FFSNetworkTests: XCTestCase {
         request.setValue("Custom value", forHTTPHeaderField: "Custom key")
         XCTAssertEqual(request.allHTTPHeaderFields?["Custom key"], "Custom value")
     }
-    
-    static var allTests = [
-        ("testNoDataNoErrorCaseUrlRequestSend", testNoDataNoErrorCaseUrlRequestSend),
-    ]
 }

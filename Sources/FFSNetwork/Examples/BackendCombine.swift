@@ -1,5 +1,5 @@
 //
-//  BackendRx.swift
+//  BackendCombine.swift
 //  FFSNetwork
 //
 //  Created by Alex da Franca on 10.08.19.
@@ -13,7 +13,7 @@ import Combine
 #endif
 
 @available(OSX 10.15, iOS 13, *)
-struct BackendRx {
+struct BackendCombine {
     private let serverConnection: CombineServer
     
     init(_ serverConfiguration: ServerConfiguring = StagingConfiguration()) {
@@ -22,11 +22,13 @@ struct BackendRx {
 }
 
 @available(OSX 10.15, iOS 13, *)
-extension BackendRx {
-    func loadTodosRx() -> AnyPublisher<FetchTodosResponse, ServerConnectionError> {
+extension BackendCombine {
+    
+    func loadTodosAsTodoResponse() -> AnyPublisher<FetchTodosResponse, ServerConnectionError> {
         return serverConnection.runTypedTaskWith(FetchTodosRequest())
     }
-    func loadTodosRx2() -> AnyPublisher<[Todo], ServerConnectionError> {
+    
+    func loadTodosAsJSONRequest() -> AnyPublisher<[Todo], ServerConnectionError> {
         let request = Request(path: "/todos")
         return serverConnection.runJSONTaskWith(request)
     }

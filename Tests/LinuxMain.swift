@@ -3,5 +3,6 @@ import XCTest
 import FFSNetworkTests
 
 var tests = [XCTestCaseEntry]()
-tests += FFSNetworkTests.allTests()
+tests += FFSNetworkTests.__allTests()
+
 XCTMain(tests)
