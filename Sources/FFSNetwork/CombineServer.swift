@@ -7,12 +7,60 @@
 //
 
 import Foundation
-
 #if canImport(Combine)
 import Combine
 #endif
 
 @available(OSX 10.15, iOS 13.0, *)
+
+/// NSURLSession using Combine
+/// Use FFSNetwork package for SwiftUI + Combine as well :-)
+///
+/// Example:
+/// ```
+///     import SwiftUI
+///     import Combine
+///     import FFSNetwork
+///
+///     struct ContentView: View {
+///         private let backend = BackendCombine()
+///         @State private var todos = [Todo]()
+///         @State private var cancellable: Cancellable? = nil
+///
+///         var body: some View {
+///             List(todos) { todo in
+///                 HStack {
+///                     Text(todo.title)
+///                     Spacer()
+///                     if todo.completed {
+///                         Image(systemName: "checkmark")
+///                     }
+///                 }
+///                 .padding([.leading, .trailing], 8)
+///             }
+///             .onAppear {
+///                 self.loadTodos()
+///             }
+///         }
+///
+///         func loadTodos() {
+///             cancellable = backend
+///                 .loadTodosAsTodoResponse()
+///                 .sink(receiveCompletion: { (error) in
+///                     // if error != nil then handle the error
+///                 }, receiveValue: { (response) in
+///                     self.todos = response.value
+///                 })
+///         }
+///     }
+///
+///     struct ContentView_Previews: PreviewProvider {
+///         static var previews: some View {
+///             ContentView()
+///         }
+///     }
+/// ```
+
 public struct CombineServer {
     private let urlSession: URLSession
     private let serverConfiguration: ServerConfiguring
