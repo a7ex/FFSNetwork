@@ -17,7 +17,7 @@ import Foundation
 ///
 /// ```
 ///    struct Backend {
-///        private let serverConnection: ServerConnection!
+///        private let serverConnection: ServerConnection
 ///
 ///        init(_ serverConfiguration: ServerConfiguring) {
 ///            serverConnection = ServerConnection(configuration: serverConfiguration)
