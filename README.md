@@ -23,7 +23,7 @@ Further there is a class called *BackendRx*. This class demonstrates the use of 
 
  ```swift
 struct Backend {
-    private let serverConnection: ServerConnection!
+    private let serverConnection: ServerConnection
 
     init(_ serverConfiguration: ServerConfiguring) {
         serverConnection = ServerConnection(configuration: serverConfiguration)
@@ -93,7 +93,7 @@ The CombineServer is only available starting with Mac Os X 15 and iOS 13, as it 
     import FFSNetwork
 
     struct ContentView: View {
-        private let backend = BackendRx()
+        private let backend = BackendCombine()
         @State private var todos = [Todo]()
         @State private var cancellable: Cancellable? = nil
         
@@ -115,9 +115,9 @@ The CombineServer is only available starting with Mac Os X 15 and iOS 13, as it 
         
         func loadTodos() {
             cancellable = backend
-                .loadTodosRx()
+                .loadTodosAsTodoResponse()
                 .sink(receiveCompletion: { (error) in
-                    
+                    // if error != nil then handle the error
                 }, receiveValue: { (response) in
                     self.todos = response.value
                 })
