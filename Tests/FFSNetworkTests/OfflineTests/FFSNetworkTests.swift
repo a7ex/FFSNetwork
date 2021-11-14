@@ -249,10 +249,10 @@ class FFSNetworkTests: XCTestCase {
         let typedRequest = FetchTodosRequest()
         serverConnection.runTaskWith(typedRequest) { (result: Result<FetchTodosResponse, Error>) in
             if case let Result.failure(rslt) = result {
-                XCTAssertEqual(ErrorMessageProvider.errorMessageFor(rslt), "Error decoding data. (Error: The operation couldn’t be completed. (FFSNetwork.JSONResponseError error 0.))")
+                XCTAssertEqual(ErrorMessageProvider.errorMessageFor(rslt), "Error decoding data. (Error: The operation couldn’t be completed. (FFSNetworkTests.JSONResponseError error 0.))")
                 if let serverConnectionError = rslt as? ServerConnectionError {
                     if case let .dataDecodingError(error, request, response, data) = serverConnectionError {
-                        XCTAssertEqual(error.localizedDescription, "The operation couldn’t be completed. (FFSNetwork.JSONResponseError error 0.)")
+                        XCTAssertEqual(error.localizedDescription, "The operation couldn’t be completed. (FFSNetworkTests.JSONResponseError error 0.)")
                         
                         if let jsonResponseError = error as? JSONResponseError {
                             if case let .noData(xresponse) = jsonResponseError {
@@ -297,10 +297,10 @@ class FFSNetworkTests: XCTestCase {
         
         serverConnection.runTaskWith(typedRequest) { (result: Result<FetchTodosResponse, Error>) in
             if case let Result.failure(rslt) = result {
-                XCTAssertEqual(ErrorMessageProvider.errorMessageFor(rslt), "Error decoding data. (Error: The operation couldn’t be completed. (FFSNetwork.JSONResponseError error 1.))")
+                XCTAssertEqual(ErrorMessageProvider.errorMessageFor(rslt), "Error decoding data. (Error: The operation couldn’t be completed. (FFSNetworkTests.JSONResponseError error 1.))")
                 if let serverConnectionError = rslt as? ServerConnectionError {
                     if case let .dataDecodingError(error, request, response, data) = serverConnectionError {
-                        XCTAssertEqual(error.localizedDescription, "The operation couldn’t be completed. (FFSNetwork.JSONResponseError error 1.)")
+                        XCTAssertEqual(error.localizedDescription, "The operation couldn’t be completed. (FFSNetworkTests.JSONResponseError error 1.)")
                         if let jsonResponseError = error as? JSONResponseError {
                             if case let .decodingError(decoderError, trequest, tresponse, dataAsString) = jsonResponseError {
                                 XCTAssertEqual(decoderError.localizedDescription, "The data couldn’t be read because it isn’t in the correct format.")
@@ -511,12 +511,12 @@ class FFSNetworkTests: XCTestCase {
         
         serverConnection.runTaskWith(typedRequest) { (result: Result<FetchTodosResponse, Error>) in
             if case let Result.failure(error) = result {
-                XCTAssertEqual(ErrorMessageProvider.errorMessageFor(error), "Error decoding data. (Error: The operation couldn’t be completed. (FFSNetwork.JSONResponseError error 1.))")
+                XCTAssertEqual(ErrorMessageProvider.errorMessageFor(error), "Error decoding data. (Error: The operation couldn’t be completed. (FFSNetworkTests.JSONResponseError error 1.))")
                 
                 if let error = error as? ServerConnectionError {
                     switch error {
                     case .dataDecodingError(let error, let urlRequest, let urlResponse, let data):
-                        XCTAssertEqual(error.localizedDescription, "The operation couldn’t be completed. (FFSNetwork.JSONResponseError error 1.)")
+                        XCTAssertEqual(error.localizedDescription, "The operation couldn’t be completed. (FFSNetworkTests.JSONResponseError error 1.)")
                         if let data = data {
                         XCTAssertEqual(String(data: data, encoding: .utf8), expectedString)
                         } else {

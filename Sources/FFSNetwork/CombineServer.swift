@@ -11,8 +11,6 @@ import Foundation
 import Combine
 #endif
 
-@available(OSX 10.15, iOS 13.0, *)
-
 /// NSURLSession using Combine
 /// Use FFSNetwork package for SwiftUI + Combine as well :-)
 ///
@@ -61,11 +59,13 @@ import Combine
 ///     }
 /// ```
 
+@available(swift 5.1)
+@available(OSX 10.15, iOS 13.0, *)
 public struct CombineServer {
     private let urlSession: URLSession
     private let serverConfiguration: ServerConfiguring
     private let messageHandler: ((String, CFAbsoluteTime) -> Void)
-    
+
     public init(configuration: ServerConfiguring,
                 urlSession: URLSession = .shared,
                 messageHandler: (@escaping (String, CFAbsoluteTime) -> Void) = { _, _ in}) {
@@ -75,9 +75,10 @@ public struct CombineServer {
     }
 }
 
+@available(swift 5.1)
 @available(OSX 10.15, iOS 13.0, *)
 extension CombineServer {
-    
+
     /// Run a request and receive a string response upon success
     /// - Parameter request: a request which conforms to NetworkRequest (URLRequest does)
     /// - Parameter encoding: the expected string encoding of the response data
@@ -95,7 +96,7 @@ extension CombineServer {
         .compactMap { String(data: $0, encoding: encoding) }
         .eraseToAnyPublisher()
     }
-    
+
     /// Run a request and receive a JSON object upon success
     /// The generic return type U must conform to the Decodable protocol
     /// - Parameter request: a request which conforms to NetworkRequest (URLRequest does)
@@ -121,7 +122,7 @@ extension CombineServer {
             }
             .eraseToAnyPublisher()
     }
-    
+
     /// Run a typed request and receive the requested type upon success
     /// - Parameter request: a request which conforms to TypedNetworkRequest
     public func runTypedTaskWith<T: TypedNetworkRequest>(_ request: T) ->
@@ -147,10 +148,12 @@ extension CombineServer {
     }
 }
 
+@available(swift 5.1)
 @available(OSX 10.15, iOS 13.0, *)
 public protocol DataTaskPublisherCreator {
     func dataTaskPublisher(for request: URLRequest) -> URLSession.DataTaskPublisher
 }
 
+@available(swift 5.1)
 @available(OSX 10.15, iOS 13.0, *)
 extension URLSession: DataTaskPublisherCreator { }

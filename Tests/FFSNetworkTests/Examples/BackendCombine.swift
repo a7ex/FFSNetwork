@@ -12,22 +12,24 @@ import FFSNetwork
 import Combine
 #endif
 
+@available(swift 5.1)
 @available(OSX 10.15, iOS 13, *)
 struct BackendCombine {
     private let serverConnection: CombineServer
-    
+
     init(_ serverConfiguration: ServerConfiguring = StagingConfiguration()) {
         serverConnection = CombineServer(configuration: serverConfiguration)
     }
 }
 
+@available(swift 5.1)
 @available(OSX 10.15, iOS 13, *)
 extension BackendCombine {
-    
+
     func loadTodosAsTodoResponse() -> AnyPublisher<FetchTodosResponse, ServerConnectionError> {
         return serverConnection.runTypedTaskWith(FetchTodosRequest())
     }
-    
+
     func loadTodosAsJSONRequest() -> AnyPublisher<[Todo], ServerConnectionError> {
         let request = Request(path: "/todos")
         return serverConnection.runJSONTaskWith(request)
