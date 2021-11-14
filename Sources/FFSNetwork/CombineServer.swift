@@ -66,12 +66,18 @@ public struct CombineServer {
     private let serverConfiguration: ServerConfiguring
     private let messageHandler: ((String, CFAbsoluteTime) -> Void)
 
+    /// Enable/disable here whether to log full results or only a summary in order to reduce clutter in the console
+    private let loglevel: FFSLogLevel
+    private static var correlationId = 0
+
     public init(configuration: ServerConfiguring,
                 urlSession: URLSession = .shared,
+                logLevel: FFSLogLevel = .isPrivate,
                 messageHandler: (@escaping (String, CFAbsoluteTime) -> Void) = { _, _ in}) {
         self.serverConfiguration = configuration
         self.urlSession = urlSession
         self.messageHandler = messageHandler
+        self.loglevel = logLevel
     }
 }
 
@@ -86,11 +92,22 @@ extension CombineServer {
         guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
             preconditionFailure("Unable to create URLRequest from request: \(request)")
         }
+        Self.correlationId += 1
         let startTime = CFAbsoluteTimeGetCurrent()
-        messageHandler(urlRequest.formattedURLRequest, 0)
+        let ticketNumber = Self.correlationId
+        var logString = urlRequest.formattedURLRequest(verbose: loglevel == .isVerbose, correlationId: "\(ticketNumber)")
+        if loglevel == .isVerbose {
+            logString += "\nADDITIONAL HEADERS: \(String(describing: urlSession.configuration.httpAdditionalHeaders))"
+        }
+        messageHandler(logString, 0)
         return urlSession.dataTaskPublisher(for: urlRequest)
             .map {
-                self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
+                var responseLogString = $0.response.formattedURLResponse(
+                    verbose: self.loglevel == .isVerbose,
+                    correlationId: "\(ticketNumber)",
+                    elapsed: CFAbsoluteTimeGetCurrent() - startTime)
+                responseLogString += ServerConnection.getDataPrintOutput(for: $0.data, logLevel: self.loglevel)
+                self.messageHandler(responseLogString, CFAbsoluteTimeGetCurrent() - startTime)
                 return $0.data
         }
         .compactMap { String(data: $0, encoding: encoding) }
@@ -104,16 +121,28 @@ extension CombineServer {
         guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
             preconditionFailure("Unable to create URLRequest from request: \(request)")
         }
+        Self.correlationId += 1
         let startTime = CFAbsoluteTimeGetCurrent()
+        let ticketNumber = Self.correlationId
+        var logString = urlRequest.formattedURLRequest(verbose: loglevel == .isVerbose, correlationId: "\(ticketNumber)")
+        if loglevel == .isVerbose {
+            logString += "\nADDITIONAL HEADERS: \(String(describing: urlSession.configuration.httpAdditionalHeaders))"
+        }
+        messageHandler(logString, 0)
         let decoder = JSONDecoder()
-        messageHandler(urlRequest.formattedURLRequest, 0)
         return urlSession.dataTaskPublisher(for: urlRequest)
             .map {
-                self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
+                var responseLogString = $0.response.formattedURLResponse(
+                    verbose: self.loglevel == .isVerbose,
+                    correlationId: "\(ticketNumber)",
+                    elapsed: CFAbsoluteTimeGetCurrent() - startTime)
+                responseLogString += ServerConnection.getDataPrintOutput(for: $0.data, logLevel: self.loglevel)
+                self.messageHandler(responseLogString, CFAbsoluteTimeGetCurrent() - startTime)
                 return $0.data
             }
             .decode(type: U.self, decoder: decoder)
             .mapError { error in
+                self.messageHandler("ERROR (\(ticketNumber)): \(String(describing: error))", CFAbsoluteTimeGetCurrent() - startTime)
                 if let error = error as? ServerConnectionError {
                     return error
                 } else {
@@ -126,25 +155,37 @@ extension CombineServer {
     /// Run a typed request and receive the requested type upon success
     /// - Parameter request: a request which conforms to TypedNetworkRequest
     public func runTypedTaskWith<T: TypedNetworkRequest>(_ request: T) ->
-        AnyPublisher<T.ReturnType, ServerConnectionError> where T.ReturnType.ResponseType: Decodable {
-            guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
-                preconditionFailure("Unable to create URLRequest from request: \(request)")
+    AnyPublisher<T.ReturnType, ServerConnectionError> where T.ReturnType.ResponseType: Decodable {
+        guard let urlRequest = try? serverConfiguration.createURLRequest(with: request) else {
+            preconditionFailure("Unable to create URLRequest from request: \(request)")
+        }
+        Self.correlationId += 1
+        let startTime = CFAbsoluteTimeGetCurrent()
+        let ticketNumber = Self.correlationId
+        var logString = urlRequest.formattedURLRequest(verbose: loglevel == .isVerbose, correlationId: "\(ticketNumber)")
+        if loglevel == .isVerbose {
+            logString += "\nADDITIONAL HEADERS: \(String(describing: urlSession.configuration.httpAdditionalHeaders))"
+        }
+        messageHandler(logString, 0)
+        return urlSession.dataTaskPublisher(for: urlRequest)
+            .tryMap {
+                var responseLogString = $0.response.formattedURLResponse(
+                    verbose: self.loglevel == .isVerbose,
+                    correlationId: "\(ticketNumber)",
+                    elapsed: CFAbsoluteTimeGetCurrent() - startTime)
+                responseLogString += ServerConnection.getDataPrintOutput(for: $0.data, logLevel: self.loglevel)
+                self.messageHandler(responseLogString, CFAbsoluteTimeGetCurrent() - startTime)
+                return try request.mapResponse($0.data, $0.response, urlRequest)
             }
-            let startTime = CFAbsoluteTimeGetCurrent()
-            messageHandler(urlRequest.formattedURLRequest, 0)
-            return urlSession.dataTaskPublisher(for: urlRequest)
-                .tryMap {
-                    self.messageHandler($0.response.formattedURLResponse, CFAbsoluteTimeGetCurrent() - startTime)
-                    return try request.mapResponse($0.data, $0.response, urlRequest)
+            .mapError { error in
+                self.messageHandler("ERROR (\(ticketNumber)): \(String(describing: error))", CFAbsoluteTimeGetCurrent() - startTime)
+                if let error = error as? ServerConnectionError {
+                    return error
+                } else {
+                    return ServerConnectionError.apiError(reason: error.localizedDescription)
                 }
-                .mapError { error in
-                    if let error = error as? ServerConnectionError {
-                        return error
-                    } else {
-                        return ServerConnectionError.apiError(reason: error.localizedDescription)
-                    }
-                }
-                .eraseToAnyPublisher()
+            }
+            .eraseToAnyPublisher()
     }
 }
 

@@ -9,44 +9,50 @@
 import Foundation
 
 internal extension URLResponse {
-    var formattedURLResponse: String {
+    func formattedURLResponse(verbose: Bool = false, correlationId: String = "", elapsed: TimeInterval = .zero) -> String {
         if let httpResponse = self as? HTTPURLResponse {
-            return httpResponse.formattedHTTPURLResponse
+            return httpResponse.formattedHTTPURLResponse(verbose: verbose, correlationId: correlationId, elapsed: elapsed)
         }
-        var responseString = "-----------------------------"
-        if let url = url { responseString += "\nRESPONSE FROM URL: \(url.absoluteString)" }
-        if let mimeType = mimeType { responseString += "\nMIME TYPE: \(mimeType)" }
-        if let textEncodingName = textEncodingName { responseString += "\nTEXT ENCODNG NAME: \(textEncodingName)" }
-        responseString += "\nEXPECTED CONTENT LENGTH: \(expectedContentLength)"
-        if let suggestedFilename = suggestedFilename { responseString += "\nSUGGESTED FILENAME: \(suggestedFilename)" }
-        responseString += "\n-----------------------------"
+        var responseString = ""
+        if let url = url {
+            responseString += "RESPONSE FROM URL (\(correlationId)): \(url.absoluteString) took \(String(format: "%.3f", elapsed)) seconds"
+        }
+        if verbose {
+            if let mimeType = mimeType { responseString += "\nMIME TYPE: \(mimeType)" }
+            if let textEncodingName = textEncodingName { responseString += "\nTEXT ENCODNG NAME: \(textEncodingName)" }
+            responseString += "\nEXPECTED CONTENT LENGTH: \(expectedContentLength)"
+            if let suggestedFilename = suggestedFilename { responseString += "\nSUGGESTED FILENAME: \(suggestedFilename)" }
+        }
         return responseString
     }
 }
 
 internal extension HTTPURLResponse {
-    var formattedHTTPURLResponse: String {
+    func formattedHTTPURLResponse(verbose: Bool = false, correlationId: String = "", elapsed: TimeInterval = .zero) -> String {
         var formattedHeaders: String {
             return allHeaderFields.map({ item -> String in
                 let (key, value) = item
                 return "\t\(key) = \(value)"
             }).joined(separator: "\n")
         }
-        var responseString = "-----------------------------"
-        if let url = url { responseString += "\nRESPONSE FROM URL: \(url.absoluteString)" }
-        if let mimeType = mimeType { responseString += "\nMIME TYPE: \(mimeType)" }
-        if let textEncodingName = textEncodingName { responseString += "\nTEXT ENCODNG NAME: \(textEncodingName)" }
-        responseString += "\nEXPECTED CONTENT LENGTH: \(expectedContentLength)"
-        if let suggestedFilename = suggestedFilename { responseString += "\nSUGGESTED FILENAME: \(suggestedFilename)" }
-        responseString += "\nSTATUS CODE: \(HTTPURLResponse.localizedString(forStatusCode: statusCode)) \(statusCode)"
-        responseString += "\nHEADERS:\n\(formattedHeaders)"
-        responseString += "\n-----------------------------"
+        var responseString = ""
+        if let url = url {
+            responseString += "RESPONSE FROM URL (\(correlationId)): \(url.absoluteString) took \(String(format: "%.3f", elapsed)) seconds"
+        }
+        if verbose {
+            if let mimeType = mimeType { responseString += "\nMIME TYPE: \(mimeType)" }
+            if let textEncodingName = textEncodingName { responseString += "\nTEXT ENCODNG NAME: \(textEncodingName)" }
+            responseString += "\nEXPECTED CONTENT LENGTH: \(expectedContentLength)"
+            if let suggestedFilename = suggestedFilename { responseString += "\nSUGGESTED FILENAME: \(suggestedFilename)" }
+            responseString += "\nSTATUS CODE: \(HTTPURLResponse.localizedString(forStatusCode: statusCode)) \(statusCode)"
+            responseString += "\nHEADERS:\n\(formattedHeaders)"
+        }
         return responseString
     }
 }
 
 internal extension URLRequest {
-    var formattedURLRequest: String {
+    func formattedURLRequest(verbose: Bool = true, correlationId: String = "") -> String {
         var formattedHeaders: String {
             guard let allHTTPHeaderFields = allHTTPHeaderFields else {
                 return ""
@@ -54,22 +60,49 @@ internal extension URLRequest {
             return allHTTPHeaderFields.map({ item -> String in
                 let (key, value) = item
                 return "\t\(key) = \(value)"
-                }).joined(separator: "\n")
+            }).joined(separator: "\n")
         }
-        var responseString = "-----------------------------"
-        if let url = url { responseString += "\nREQUEST TO URL: \(url.absoluteString)" }
-        if let httpMethod = httpMethod { responseString += "\nMETHOD: \(httpMethod)" }
-        let headers = formattedHeaders
-        if headers.isEmpty {responseString += "\nHEADERS:"}
-        else {responseString += "\nHEADERS:\n\(headers)"}
-        responseString += "\nCACHE POLICY: \(cachePolicy)"
-        if let httpBody = httpBody { responseString += "\nBODY:\n\(String(data: httpBody, encoding: .utf8) ?? String(data: httpBody, encoding: .isoLatin1) ?? httpBody.description)" }
-        responseString += "\nTIMEOUT INTERVAL: \(timeoutInterval)"
-        responseString += "\nHTTP SHOULD HANDLE COOKIES: \(httpShouldHandleCookies)"
-        responseString += "\nHTTP SHOULD USE PIPELINING: \(httpShouldUsePipelining)"
-        responseString += "\nALLOWS CELLULAR ACCESS: \(allowsCellularAccess)"
-        responseString += "\nNETWORK SERVICE TYPE: \(networkServiceType)"
-        responseString += "\n-----------------------------"
+        var responseString = ""
+        if let httpMethod = httpMethod { responseString += "\(httpMethod) ".uppercased() }
+        if let url = url { responseString += "REQUEST TO URL (\(correlationId)): \(url.absoluteString)" }
+        if verbose {
+            let headers = formattedHeaders
+            if headers.isEmpty {responseString += "\nHEADERS:"}
+            else {responseString += "\nHEADERS:\n\(headers)"}
+            responseString += "\nCACHE POLICY: \(cachePolicy.debugDescription)"
+        }
+        if let httpBody = httpBody {
+            let body = "\(String(data: httpBody, encoding: .utf8) ?? String(data: httpBody, encoding: .isoLatin1) ?? httpBody.description)"
+            responseString += "\nBODY:\n\(body)"
+        }
+        if verbose {
+            responseString += "\nTIMEOUT INTERVAL: \(timeoutInterval)"
+            responseString += "\nHTTP SHOULD HANDLE COOKIES: \(httpShouldHandleCookies)"
+            responseString += "\nHTTP SHOULD USE PIPELINING: \(httpShouldUsePipelining)"
+            responseString += "\nALLOWS CELLULAR ACCESS: \(allowsCellularAccess)"
+            responseString += "\nNETWORK SERVICE TYPE: \(networkServiceType)"
+        }
         return responseString
+    }
+}
+
+extension NSURLRequest.CachePolicy {
+    var debugDescription: String {
+        switch self {
+        case .reloadIgnoringLocalAndRemoteCacheData:
+            return "reloadIgnoringLocalAndRemoteCacheData"
+        case .reloadIgnoringLocalCacheData:
+            return "reloadIgnoringLocalCacheData"
+        case .reloadRevalidatingCacheData:
+            return "reloadRevalidatingCacheData"
+        case .returnCacheDataDontLoad:
+            return "returnCacheDataDontLoad"
+        case .returnCacheDataElseLoad:
+            return "returnCacheDataElseLoad"
+        case .useProtocolCachePolicy:
+            return "useProtocolCachePolicy"
+        @unknown default:
+            return "unknown default"
+        }
     }
 }

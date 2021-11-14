@@ -10,6 +10,7 @@ import Foundation
 
 extension Mocks {
     struct MockedURLSession: DataTaskCreator {
+        let configuration = URLSessionConfiguration.default
         let mockURLSessionDataTask: MockedURLSessionDataTask
         
         func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {

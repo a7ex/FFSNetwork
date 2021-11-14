@@ -28,7 +28,7 @@ class ErrorMessageProviderTests: XCTestCase {
         XCTAssertEqual(ErrorMessageProvider.errorMessageFor(error), "Unexpected response")
         
         error = .noHTTPResponse(mockRequest, nil, nil)
-        XCTAssertEqual(ErrorMessageProvider.errorMessageFor(error), "Unknown error, no response provided.")
+        XCTAssertEqual(ErrorMessageProvider.errorMessageFor(error), "nil")
         
         var urlComps = URLComponents()
         urlComps.scheme = "https"

@@ -49,7 +49,7 @@ public enum ServerConnectionError: Error, LocalizedError {
         case .dataDecodingError(let error, _, _, _):
             return "Error decoding data. (Error: \(error.localizedDescription))"
         case .noHTTPResponse(_, let response, _):
-            return response?.formattedURLResponse ?? "Unknown error, no response provided."
+            return String(describing: response)
         case .descriptiveServerError(let description):
             return description
         case .httpError(let errorCode):
