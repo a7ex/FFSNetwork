@@ -59,7 +59,7 @@ import Combine
 ///     }
 /// ```
 
-@available(swift 5.1)
+@available(swift 5.4)
 @available(OSX 10.15, iOS 13.0, *)
 public struct CombineServer {
     private let urlSession: URLSession
@@ -81,7 +81,7 @@ public struct CombineServer {
     }
 }
 
-@available(swift 5.1)
+@available(swift 5.4)
 @available(OSX 10.15, iOS 13.0, *)
 extension CombineServer {
 
@@ -189,12 +189,12 @@ extension CombineServer {
     }
 }
 
-@available(swift 5.1)
+@available(swift 5.4)
 @available(OSX 10.15, iOS 13.0, *)
 public protocol DataTaskPublisherCreator {
     func dataTaskPublisher(for request: URLRequest) -> URLSession.DataTaskPublisher
 }
 
-@available(swift 5.1)
+@available(swift 5.4)
 @available(OSX 10.15, iOS 13.0, *)
 extension URLSession: DataTaskPublisherCreator { }
