@@ -84,29 +84,3 @@ extension URLResponse {
         lhs.textEncodingName == rhs.textEncodingName
     }
 }
-
-@available(OSX 10.15, iOS 13.0, *)
-extension Mocks {
-    static func mockedCombineServerReturning(data: Data?, response: HTTPURLResponse?, error: Error?, url: URL, file: StaticString = #file, line: UInt = #line) -> CombineServer {
-        let serverConfiguration = Mocks.ServerConfigurationMock()
-        let config = URLSessionConfiguration.ephemeral
-        config.protocolClasses = [MockURLProtocol.self]
-        let sessionMock = URLSession(configuration: config)
-        
-        MockURLProtocol.requestHandler = { request in
-            XCTAssertEqual(url, request.url, file: file, line: line)
-            if let error = error {
-                throw error
-            }
-            return (response ?? HTTPURLResponse(), data ?? Data())
-        }
-        
-        return CombineServer(configuration: serverConfiguration, urlSession: sessionMock) { (debugMessage, elapsedTime) in
-            if elapsedTime > 0 {
-                let fileurl = URL(fileURLWithPath: #file)
-                print("ELAPSED TIME: \(String(format: "%.04f", elapsedTime)) seconds (\(fileurl.lastPathComponent):\(#line))")
-            }
-            print(debugMessage)
-        }
-    }
-}
